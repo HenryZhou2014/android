@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">极速代发</string>
+    <string name="hello_world">你好!</string>
+    <string name="action_settings">设置</string>
+	<string name="member_signin">会员注册</string>
+	<string name="login_login">登录</string>
+	<string name="login_username">用户名 </string>
+	<string name="login_password">密码</string>
+	<string name="login_register">免费注册</string>
+	<string name="user_name_cannot_be_empty">用户名不能为空！</string>
+	<string name="password_cannot_be_empty">密码不能为空</string>
+	<string name="product_title">取货明细</string>
+</resources>
