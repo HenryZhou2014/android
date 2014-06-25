@@ -14,10 +14,13 @@ import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -79,15 +82,28 @@ public class ProductListActivity extends Activity {
                 setTitle("点击第"+arg2+"个项目");  
             }  
         });  
+        
+       list.setOnItemLongClickListener(new OnItemLongClickListener(){
+
+		@Override
+		public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+				int arg2, long arg3) {
+			ImageView itemImage = (ImageView)arg1.findViewById(R.id.ItemImage);
+			itemImage.setImageResource(R.drawable.checkbox_checked);
+			return false;
+		}
+    	   
+       });
           
       //添加长按点击  
         list.setOnCreateContextMenuListener(new OnCreateContextMenuListener() {  
               
             @Override  
             public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {  
-                menu.setHeaderTitle("长按菜单-ContextMenu");     
-                menu.add(0, 0, 0, "弹出长按菜单0");  
-                menu.add(0, 1, 0, "弹出长按菜单1");     
+                menu.setHeaderTitle("操作");     
+                menu.add(0, 0, 0, "标记为已拿货");  
+                menu.add(0, 1, 0, "标记为未拿货");
+                menu.add(0, 2, 0, "发送邮件信息");    
             }  
         });   
     }  
@@ -95,7 +111,19 @@ public class ProductListActivity extends Activity {
     //长按菜单响应函数  
     @Override  
     public boolean onContextItemSelected(MenuItem item) {  
-        setTitle("点击了长按菜单里面的第"+item.getItemId()+"个项目");   
+//        setTitle("点击了长按菜单里面的第"+item.getItemId()+"个项目"); 
+    	switch (item.getItemId()) {
+		case 0: //标记为已拿货
+//			ImageView itemImage = (ImageView)findViewById(R.id.ItemImage);
+//			itemImage.setImageResource(R.drawable.checkbox_checked);
+			break;
+		case 1:
+			break;
+		case 2:
+			break;
+		default:
+			break;
+		}
         return super.onContextItemSelected(item);  
     } 
     
