@@ -12,4 +12,6 @@
 	<string name="user_name_cannot_be_empty">User name cannot be empty</string>
 	<string name="password_cannot_be_empty">Password cannot be empty</string>
 	<string name="product_title">Product List</string>
+	<string name="product_filter">Product Filter</string>
+	<string name="product_syn">Synchronize</string>
 </resources>

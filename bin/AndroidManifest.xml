@@ -33,7 +33,7 @@
         </activity>
         <activity
             android:name="com.example.jsdfgrp.ProductListActivity"
-            android:theme="@android:style/Animation.Activity"
+            android:theme="@android:style/Theme.Wallpaper.NoTitleBar.Fullscreen"
             android:label="@string/product_title" >
         </activity>
     </application>
