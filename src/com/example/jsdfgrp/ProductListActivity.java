@@ -39,7 +39,7 @@ public class ProductListActivity extends Activity {
     ListView list=null;
     private Handler handler;
     private Context ctx;
-    
+    private static List<OrderList> orderList;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
@@ -52,11 +52,15 @@ public class ProductListActivity extends Activity {
 	    handler=new Handler(){
 	    	public void handleMessage(Message msg){
 	    		ProductObject productObject=(ProductObject)msg.obj;//obj不一定是String类，可以是别的类，看用户具体的应用
-	    		List<OrderList> orderList = productObject.getOrder_list();
+	    		orderList = productObject.getOrder_list();
             	for(int i = 0; orderList!=null&&(i<orderList.size()) ; i++){
             		OrderList tmpOrderList = orderList.get(i);
             		HashMap<String, Object> map = new HashMap<String, Object>();  
-	                map.put("ItemImage", R.drawable.checkbox_unchecked);//图像资源的ID  
+            		if(tmpOrderList.getIs_get().equals("0")){
+            			map.put("ItemImage", R.drawable.checkbox_unchecked);//图像资源的ID  
+            		}else{
+            			map.put("ItemImage", R.drawable.checkbox_checked);//图像资源的ID  
+            		}
 	                map.put("ItemTitle", tmpOrderList.getMarket());  
 	                map.put("ItemText", tmpOrderList.getFloor()+"F(" +tmpOrderList.getPurchase_code()+ ") "+tmpOrderList.getGoods_attr() +" -"+tmpOrderList.getGoods_number() +"" +
 	                		"件*P"+tmpOrderList.getGoods_price() + " [" +tmpOrderList.getShort_order_time()+"]");  
