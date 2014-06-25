@@ -63,6 +63,7 @@ public class MainActivity extends Activity implements OnClickListener {
           		if("0".equals(str[0])){
           			Intent registerIntent = new Intent(context,ProductListActivity.class);
 					startActivity(registerIntent);
+					context.finish();
 	      		}else{
 		    		ToastView toast = new ToastView(context, "µÇÂ¼Ê§°Ü£º"+str[1]);
 			        toast.setGravity(Gravity.CENTER, 0, 0);
