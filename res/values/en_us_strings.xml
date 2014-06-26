@@ -14,4 +14,6 @@
 	<string name="product_title">Product List</string>
 	<string name="product_filter">Product Filter</string>
 	<string name="product_syn">Synchronize</string>
+	<string name="fitler_isgettitle">IsGet</string>
+	<string name="fitler_areatitle">Area Name</string>
 </resources>

@@ -5,7 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -13,16 +16,20 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.SimpleAdapter;
+import android.widget.Spinner;
 
 import com.jsdf.bean.OrderList;
 import com.jsdf.bean.ProductObject;
@@ -40,15 +47,50 @@ public class ProductListActivity extends Activity {
     private Handler handler;
     private Context ctx;
     private static List<OrderList> orderList;
-    
+    private PopupWindow mpop = null;
+    private Button synBtn=null; //同步按钮
+    private Button filterBtn = null;
+    private Dialog filterDialog = null;
+    private Spinner spinnerIsGet;  
+    private Spinner spinnerArea;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_productlist);
 		ctx = this;
+		
+		synBtn = (Button) findViewById(R.id.product_sycid);  
+		filterBtn = (Button) findViewById(R.id.product_fitlerid);  
 	     //绑定Layout里面的ListView  
 		list= (ListView) findViewById(R.id.ListView01);  
-          
+		spinnerIsGet=(Spinner)findViewById(R.id.spinnerIsGet);  
+		spinnerArea=(Spinner)findViewById(R.id.spinnerAreaTitle);  
+		//将可选内容与ArrayAdapter连接起来   
+		String[] colors={"已拿","未拿"}; 
+//        ArrayAdapter<String> adapterIsGet=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, colors);  
+//        //将adapter 添加到spinner中   
+//        spinnerIsGet.setAdapter(adapterIsGet);  
+//        //添加Spinner事件监听器  
+//        spinnerIsGet.setOnItemSelectedListener(new OnItemSelectedListener(){
+//
+//			@Override
+//			public void onItemSelected(AdapterView<?> arg0, View arg1,
+//					int arg2, long arg3) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//
+//			@Override
+//			public void onNothingSelected(AdapterView<?> arg0) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//        	
+//        });   
+		
+		
+		
+//		mpop =  new PopupWindow(getLayoutInflater().inflate(R.layout.window, null),LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);  
 	    handler=new Handler(){
 	    	public void handleMessage(Message msg){
 	    		ProductObject productObject=(ProductObject)msg.obj;//obj不一定是String类，可以是别的类，看用户具体的应用
@@ -109,7 +151,43 @@ public class ProductListActivity extends Activity {
                 menu.add(0, 1, 0, "标记为未拿货");
                 menu.add(0, 2, 0, "发送邮件信息");    
             }  
-        });   
+        }); 
+        
+        synBtn.setOnClickListener(new Button.OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+        
+        filterBtn.setOnClickListener(new Button.OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				filterDialog.show();
+			}
+		});
+        
+        //筛选对话框
+        // 取得自定义View
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View filterView = layoutInflater.inflate(R.layout.filter_panel, null);
+        filterDialog = new AlertDialog.Builder(this)
+        	.setTitle("条件筛选")
+        	.setIcon(R.drawable.jsdf_logo)
+        	.setView(filterView)
+        	.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        	     @Override
+        	     public void onClick(DialogInterface dialog, int which) {
+        	      // TODO Auto-generated method stub
+        	     }
+        	})
+        	 .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+		     @Override
+		     public void onClick(DialogInterface dialog, int which) {
+		      // TODO Auto-generated method stub
+		     }
+		    }).create();   
     }  
       
     //长按菜单响应函数  
@@ -133,7 +211,8 @@ public class ProductListActivity extends Activity {
     
     public Handler getHandler(){
     	return this.handler;
-    }  
+    }
+    
     
 }
 class UpdateListView extends Thread{ //子线程更新界面

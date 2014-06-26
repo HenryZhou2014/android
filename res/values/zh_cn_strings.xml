@@ -14,4 +14,6 @@
 	<string name="product_title">取货明细</string>
 	<string name="product_filter">筛选</string>
 	<string name="product_syn">同步</string>
+	<string name="fitler_isgettitle">是否拿货</string>
+	<string name="fitler_areatitle">档口名称</string>
 </resources>
