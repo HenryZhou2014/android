@@ -67,9 +67,7 @@ public class ProductListActivity extends Activity {
 		spinnerArea=(Spinner)findViewById(R.id.spinnerAreaTitle);  
 		//将可选内容与ArrayAdapter连接起来   
 		String[] colors={"已拿","未拿"}; 
-//        ArrayAdapter<String> adapterIsGet=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, colors);  
-//        //将adapter 添加到spinner中   
-//        spinnerIsGet.setAdapter(adapterIsGet);  
+       
 //        //添加Spinner事件监听器  
 //        spinnerIsGet.setOnItemSelectedListener(new OnItemSelectedListener(){
 //
@@ -188,6 +186,10 @@ public class ProductListActivity extends Activity {
 		      // TODO Auto-generated method stub
 		     }
 		    }).create();   
+        
+        ArrayAdapter<String> adapterIsGet=new ArrayAdapter<String>(this.filterDialog.getContext(),android.R.layout.simple_spinner_item, colors);  
+        //将adapter 添加到spinner中   
+        spinnerIsGet.setAdapter(adapterIsGet);  
     }  
       
     //长按菜单响应函数  
