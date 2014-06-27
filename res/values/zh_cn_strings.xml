@@ -16,4 +16,6 @@
 	<string name="product_syn">同步</string>
 	<string name="fitler_isgettitle">是否拿货</string>
 	<string name="fitler_areatitle">档口名称</string>
+	<string name="isget_prompt">请选择是否拿货</string>
+	<string name="area_prompt">请选择拿货区域</string>
 </resources>
