@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/body_cont"
+    android:orientation="vertical" >
+
+    <FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dp" >
+		
+        <TextView    
+            android:id="@+id/areaTitleId"
+            android:layout_width="104dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|left"
+            android:layout_marginLeft="10dp"
+            android:text="@string/fitler_areatitle"
+            android:ems="10" >
+            <requestFocus />
+        </TextView    >
+		<Spinner android:id="@+id/spinnerAreaTitle"  
+		    android:layout_width="fill_parent"  
+		    android:layout_gravity="center_vertical"
+            android:layout_marginLeft="100dp"
+            android:entries="@array/spinner_area"  
+            android:prompt="@string/area_prompt"
+		    android:layout_height="wrap_content">  
+	    </Spinner>
+	</FrameLayout>
+	<FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dp" >
+        <TextView    
+            android:id="@+id/isGetTitleId"
+            android:layout_width="104dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|left"
+            android:layout_marginLeft="10dp"
+            android:text="@string/fitler_isgettitle"
+            android:ems="10" >
+            <requestFocus />
+        </TextView    >
+		<Spinner android:id="@+id/spinnerIsGet"  
+		    android:layout_width="match_parent"
+		    android:layout_marginLeft="100dp"
+		    android:prompt="@string/isget_prompt"
+		     android:entries="@array/spinner_isget"  
+		    android:layout_height="wrap_content">  
+	    </Spinner>  
+    </FrameLayout> 
+	<FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dp" >
+        <Button
+            android:id="@+id/filterConfirm"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical|left"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/filter_blue_btn"
+            android:text="@string/product_filter"
+            android:textColor="#ffffff"
+            android:textSize="16dp" />
+         <Button
+            android:id="@+id/filterCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical|right"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/filter_blue_btn"
+            android:text="@string/product_filter"
+            android:textColor="#ffffff"
+            android:textSize="16dp" />
+    </FrameLayout> 
+</LinearLayout>

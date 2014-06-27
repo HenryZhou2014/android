@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="spinner_isget">
+        <item>无</item>
+        <item>已拿</item>
+        <item>未拿</item>
+    </string-array>
+    
+    <string-array name="spinner_area">
+        <item>无</item>
+        <item>鼎宝</item>
+        <item>西街</item>
+        <item>柏美</item>
+        <item>富丽</item>
+        <item>女人街</item>
+        <item>大西豪</item>
+        <item>大时代</item>
+        <item>国大</item>
+    </string-array>
+</resources>

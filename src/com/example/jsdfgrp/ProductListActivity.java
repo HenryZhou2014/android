@@ -257,8 +257,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	public void drawListView(ProductObject productObject,ArrayList<HashMap<String, Object>> listItem,Context context,ListView list){
 		List<OrderList> orderList  = productObject.getOrder_list();
 		//Çå¿Õ
-		HashMap<String, Object> emptymap = new HashMap<String, Object>(); 
-		listItem.add(emptymap);
+		listItem.clear();
     	SimpleAdapter listItemAdapter= new SimpleAdapter(context,listItem,R.layout.list_items,new String[] {"ItemImage","ItemTitle", "ItemText"},new int[] {R.id.ItemImage,R.id.ItemTitle,R.id.ItemText});  
 //    	listItemAdapter.notifyDataSetChanged();
 //    	listItemAdapter.notifyDataSetInvalidated();
