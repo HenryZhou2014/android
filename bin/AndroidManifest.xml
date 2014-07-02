@@ -38,7 +38,7 @@
         </activity>
         <activity
             android:name="com.example.jsdfgrp.FilterActivity"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen"
             android:label="@string/product_title" >
         </activity>
     </application>

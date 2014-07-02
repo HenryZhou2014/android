@@ -1,6 +1,8 @@
 package com.jsdf.bean;
 
-public class OrderList {
+import java.io.Serializable;
+
+public class OrderList implements Serializable{
 	private String pay_time;
 	private String order_id;
 	private String purchase_code;
@@ -19,6 +21,7 @@ public class OrderList {
 	private String short_order_time;
 	private String market;
 	private String floor;
+	private boolean isSysn = true;
 	
 	public String getPay_time() {
 		return pay_time;

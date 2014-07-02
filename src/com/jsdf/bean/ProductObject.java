@@ -1,8 +1,13 @@
 package com.jsdf.bean;
+import java.io.Serializable;
 import java.util.List;
 
 
-public class ProductObject {
+public class ProductObject implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -352412526864148364L;
 	private int error;
 	private String content;
 	private List<OrderList> order_list;

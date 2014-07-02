@@ -54,7 +54,7 @@ public class ProductDataUtil {
 				}
 			}
 		}else{
-			returnObj = catchProduct;
+			returnList = catchProduct.getOrder_list();
 		}
 		returnObj.setOrder_list(returnList);
 		return returnObj;

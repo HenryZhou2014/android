@@ -1,5 +1,14 @@
 package com.example.jsdfgrp;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +47,7 @@ import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
+import com.jsdf.utils.CacheUtils;
 import com.jsdf.utils.ProductDataUtil;
 import com.jsdf.view.ToastView;
 
@@ -59,14 +69,13 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private String  selectAreaCode = "";
     private String  selectIsGetCode = "";
     private HashMap<String, Object> map ;
-   
+    private static final String CACHE_FILE = "cache.dat"; //缓存文件
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_productlist);
 		ctx = this;
-		
 		synBtn = (Button) findViewById(R.id.product_sycid);  
 		filterBtn = (Button) findViewById(R.id.product_fitlerid);  
 	     //绑定Layout里面的ListView  
@@ -141,7 +150,21 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
         synBtn.setOnClickListener(new Button.OnClickListener() {//同步按钮
 			@Override
 			public void onClick(View arg0) {
-				
+				try {
+					setCache(ProductDataUtil.getProductObject());
+					ProductObject cacheObj = getCache();
+//					System.out.println(cacheObj);
+//					System.out.println(cacheObj.getOrder_list());
+//					if(cacheObj.getOrder_list()!=null)
+//						System.out.println(cacheObj.getOrder_list());
+//					ToastView toast = new ToastView(ctx,cacheObj.getOrder_list().size());
+//				    toast.setGravity(Gravity.CENTER, 0, 0);
+//				    toast.show();
+				} catch (AppException e) {
+					ToastView toast = new ToastView(ctx,e.getMessage());
+				    toast.setGravity(Gravity.CENTER, 0, 0);
+				    toast.show();
+				}
 			}
 		});
         
@@ -288,6 +311,68 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		drawListView(product,listItem,context,list);
 	}
     
+	/**
+	 * @author Henry
+	 * @see <p>缓存</p>
+	 * @param productObject
+	 * @throws AppException
+	 */
+	public  void setCache(ProductObject productObject) throws AppException{
+		ObjectOutputStream out =null;
+		try {
+			FileOutputStream openFileOutput = openFileOutput(CACHE_FILE,MODE_PRIVATE);
+			out= new ObjectOutputStream(new BufferedOutputStream(openFileOutput));
+			out.writeObject(productObject);	
+		} catch (StreamCorruptedException e) {
+			throw new AppException("缓存资源异常", e);
+		} catch (FileNotFoundException e) {
+			throw new AppException("缓存资源异常，缓存文件不存在", e);
+		} catch (IOException e) {
+//			e.printStackTrace();
+			throw new AppException("缓存资源异常，缓存读写异常", e);
+		}
+		finally{
+			try {
+				if(out!=null)out.close();
+			} catch (IOException e) {
+				throw new AppException("缓存资源异常，关闭写入流异常", e);
+			}
+		}
+	}
+	
+	/**
+	 * @author Henry
+	 * @see <p>读取缓存</p>
+	 * @return
+	 * @throws AppException
+	 */
+	public  ProductObject getCache() throws AppException{
+		ObjectInputStream in=null;
+		ProductObject productObject=null;
+//		CacheUtils.class.getClassLoader().getResourceAsStream("config.properties");
+		try {
+			FileInputStream fileInputStream = openFileInput(CACHE_FILE);
+			in = new ObjectInputStream(new BufferedInputStream(fileInputStream));
+			productObject = (ProductObject)in.readObject();
+
+		} catch (StreamCorruptedException e) {
+			throw new AppException("缓存资源异常", e);
+		} catch (FileNotFoundException e) {
+			throw new AppException("缓存资源异常，缓存文件不存在", e);
+		} catch (IOException e) {
+			throw new AppException("缓存资源异常，缓存读写异常", e);
+		} catch (ClassNotFoundException e) {
+			throw new AppException("缓存资源异常，转换异常", e);
+		}
+		finally{
+			try {
+				if(in!=null)in.close();
+			} catch (IOException e) {
+				throw new AppException("缓存资源异常，关闭读取刘异常", e);
+			}
+		}
+		return productObject;
+	}
     
 }
 class UpdateListView extends Thread{ //子线程更新界面
