@@ -24,30 +24,26 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnCreateContextMenuListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.jsdf.bean.OrderList;
 import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
-import com.jsdf.utils.CacheUtils;
 import com.jsdf.utils.ProductDataUtil;
 import com.jsdf.view.ToastView;
 
@@ -66,21 +62,27 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private Dialog filterDialog = null;
     private Spinner spinnerIsGet;  
     private Spinner spinnerArea;
+    private TextView productListTitle;
+    
+    
+    
     private String  selectAreaCode = "";
     private String  selectIsGetCode = "";
     private HashMap<String, Object> map ;
     private static final String CACHE_FILE = "cache.dat"; //缓存文件
-    
+    private static String onlineModle = "1";  //1-onlineModle,2-offlineModel
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_productlist);
+		onlineModle = (String) this.getIntent().getExtras().get(MainActivity.MODLE_NAME);
 		ctx = this;
 		synBtn = (Button) findViewById(R.id.product_sycid);  
 		filterBtn = (Button) findViewById(R.id.product_fitlerid);  
 	     //绑定Layout里面的ListView  
 		list= (ListView) findViewById(R.id.ListView01);  
-		 
+		productListTitle= (TextView)findViewById(R.id.productListTitleId);  
+		
 		//将可选内容与ArrayAdapter连接起来   
 		String[] colors={"已拿","未拿"}; 
        
@@ -113,8 +115,22 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //	    		new UpdateListView(ctx,list,productObject,listItem).start(); //子线程
 	    	}
 	    };
-         
-	    new GetProductThread(this).start(); //通过子线程获取网络数据，更新子线程
+        
+	    if("1".equals(onlineModle)){//Online Modle
+	    	new GetProductThread(this).start(); //通过子线程获取网络数据，更新子线程
+	    	productListTitle.setText(R.string.onlineModle);
+	    }else if("2".equals(onlineModle)){ //Offline Modle
+	    	try {
+	    		ProductObject offObjct = getCache();
+				drawListView(offObjct,listItem,ctx,list);
+				ProductDataUtil.setProductObject(offObjct);
+				productListTitle.setText(R.string.offlineModle);
+			} catch (AppException e) {
+				ToastView toast = new ToastView(ctx,e.getMessage());
+			    toast.setGravity(Gravity.CENTER, 0, 0);
+			    toast.show();
+			}
+	    }
 	    
         //添加点击  
         list.setOnItemClickListener(new OnItemClickListener() {  
@@ -125,27 +141,38 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //                setTitle("点击第"+arg2+"个项目");  
             }  
         });  
-        
+       
+       /**
+        * @see<p>长按</p>
+        */
        list.setOnItemLongClickListener(new OnItemLongClickListener(){
 			@Override
 			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
-				ImageView itemImage = (ImageView)arg1.findViewById(R.id.ItemImage);
-				itemImage.setImageResource(R.drawable.checkbox_checked);
+//				ImageView itemImage = (ImageView)arg1.findViewById(R.id.ItemImage);
+//				itemImage.setImageResource(R.drawable.checkbox_checked);
+				OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
+
+			    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+			    reDrawListView(ctx,null);
+			    
+//				ToastView toast = new ToastView(ctx,selectOrder.getEmail()+" : " + selectOrder.getMarket());
+//			    toast.setGravity(Gravity.CENTER, 0, 0);
+//			    toast.show();
 				return false;
 			}
        });
           
       //添加长按点击  
-        list.setOnCreateContextMenuListener(new OnCreateContextMenuListener() {  
-            @Override  
-            public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {  
-                menu.setHeaderTitle("操作");     
-                menu.add(0, 0, 0, "标记为已拿货");  
-                menu.add(0, 1, 0, "标记为未拿货");
-                menu.add(0, 2, 0, "发送邮件信息");    
-            }  
-        }); 
+//        list.setOnCreateContextMenuListener(new OnCreateContextMenuListener() {  
+//            @Override  
+//            public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {  
+//                menu.setHeaderTitle("操作");     
+//                menu.add(0, 0, 0, "标记为已拿货");  
+//                menu.add(0, 1, 0, "标记为未拿货");
+//                menu.add(0, 2, 0, "发送邮件信息");    
+//            }  
+//        }); 
         
         synBtn.setOnClickListener(new Button.OnClickListener() {//同步按钮
 			@Override
@@ -157,9 +184,9 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //					System.out.println(cacheObj.getOrder_list());
 //					if(cacheObj.getOrder_list()!=null)
 //						System.out.println(cacheObj.getOrder_list());
-//					ToastView toast = new ToastView(ctx,cacheObj.getOrder_list().size());
-//				    toast.setGravity(Gravity.CENTER, 0, 0);
-//				    toast.show();
+					ToastView toast = new ToastView(ctx,"同步成功");
+				    toast.setGravity(Gravity.CENTER, 0, 0);
+				    toast.show();
 				} catch (AppException e) {
 					ToastView toast = new ToastView(ctx,e.getMessage());
 				    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -230,18 +257,18 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	@Override
 	public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2,
 			long arg3) {
-		Log.v("arg0.getId():",arg0.getId()+"");
-		if(arg0.getId() == R.id.spinnerIsGet){
-			selectIsGetCode = arg0.getItemAtPosition(arg2).toString();
-//			ToastView toast = new ToastView(ctx,selectIsGetCode);
-//		    toast.setGravity(Gravity.CENTER, 0, 0);
-//		    toast.show();
-			Log.v("selectIsGetCode",selectIsGetCode);
-		}
-		if(arg0.getId() == R.id.spinnerAreaTitle){
-			selectAreaCode = arg0.getItemAtPosition(arg2).toString();
-			Log.v("selectAreaCode",selectAreaCode);
-		}
+//		Log.v("arg0.getId():",arg0.getId()+"");
+//		if(arg0.getId() == R.id.spinnerIsGet){
+//			selectIsGetCode = arg0.getItemAtPosition(arg2).toString();
+////			ToastView toast = new ToastView(ctx,selectIsGetCode);
+////		    toast.setGravity(Gravity.CENTER, 0, 0);
+////		    toast.show();
+//			Log.v("selectIsGetCode",selectIsGetCode);
+//		}
+//		if(arg0.getId() == R.id.spinnerAreaTitle){
+//			selectAreaCode = arg0.getItemAtPosition(arg2).toString();
+//			Log.v("selectAreaCode",selectAreaCode);
+//		}
 		
 	}
 
@@ -285,9 +312,10 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //    	listItemAdapter.notifyDataSetChanged();
 //    	listItemAdapter.notifyDataSetInvalidated();
     	list.setAdapter(listItemAdapter);
-    	
+    	ProductDataUtil.clearCacheListViewData();
     	for(int i = 0; orderList!=null&&(i<orderList.size()) ; i++){
     		OrderList tmpOrderList = orderList.get(i);
+    		ProductDataUtil.cacheListViewData(i, tmpOrderList);
     		map = new HashMap<String, Object>();  
     		if(tmpOrderList.getIs_get().equals("0")){
     			map.put("ItemImage", R.drawable.checkbox_unchecked);//图像资源的ID  

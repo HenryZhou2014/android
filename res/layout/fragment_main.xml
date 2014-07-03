@@ -18,7 +18,7 @@
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             android:background="@drawable/nav_bg" />
-
+<!-- 
         <ImageView
             android:id="@+id/login_back"
             android:layout_width="40dp"
@@ -27,7 +27,17 @@
             android:layout_marginLeft="10dp"
             android:padding="10dp"
             android:src="@drawable/item_grid_header_arrow_icon" />
-
+ -->            
+		 <Button
+            android:id="@+id/offlineBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_gravity="center_vertical|left"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/filter_blue_btn"
+            android:text="@string/login_offline"
+            android:textColor="#ffffff"
+            android:textSize="16sp" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

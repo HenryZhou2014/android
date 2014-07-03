@@ -28,7 +28,8 @@ public class Httpservice {
 	public static final String USER_REGISTER="app_user.php";
 	public static final String TEAM_GET_PRODUCT="wosdf/purchasing.php"; 
 	public static final String USER_SIGN_GRP="wosdf/privilege.php";
-	
+	public static final String USER_EMAIL_URL = "wosdf/notice.php";
+	public static final String PRODUCT_SYNC_URL="wosdf/order.php";
 	public static final String ACTION_GRP_LOGIN = "signin";
 	public static String clientSessionId="";
 	private static final String COOKIE_NAME="ECS_ID";
@@ -42,12 +43,20 @@ public class Httpservice {
 		clientSessionId = Utils.getProperties(Utils.SESSIONID);
 	}
 	
-	public  static String get(String subUrl,String parames){
+	/**
+	 * @author Henry
+	 * @see <p>公共get模块</p>
+	 * @param subUrl
+	 * @param parames
+	 * @return
+	 * @throws AppException 
+	 */
+	public  static String get(String subUrl,String parames) throws AppException{
 		String getUrl = testBaseUrl+subUrl+"?"+parames;
+		sysnSessionId();
 		getUrl += "&"+COOKIE_NAME + "=" +clientSessionId;
 		System.out.println("getUrl:"+getUrl);
 		GetMethod get  = new GetMethod(getUrl);
-//		get.setRequestHeader("Cookie","ECSCP_ID=f17bdf38d9a7f8115635fe983eff4a8a4f3056f5; ECS_ID=ab5f1f0b6018df662b5b119beadc1d081823a469;");
 		String returnStr="";
 		try {
 			int status = client.executeMethod(get);
@@ -57,21 +66,21 @@ public class Httpservice {
 			}
 			returnStr = get.getResponseBodyAsString();
 		} catch (HttpException e) {
-			e.printStackTrace();
+			throw new AppException("域名无法正常解析，服务器异常",e);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new AppException("访问无服务器读取异常",e);
 		}
 		return returnStr;
 	}
 	
-	public static String post(String subUrl,String parames){
-		String postUrl = testBaseUrl+subUrl;
+	public static String post(String subUrl,String parames) throws AppException{
+		sysnSessionId();
+		String postUrl = testBaseUrl+subUrl+"&"+COOKIE_NAME+"="+clientSessionId;
 		System.out.println("postUrl:"+postUrl);
 		PostMethod post  = new PostMethod(postUrl);
 		post.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,new DefaultHttpMethodRetryHandler());  //使用系统提供的默认的恢复策略
 		post.getParams().setParameter(HttpMethodParams.HTTP_CONTENT_CHARSET,"utf-8"); //编码
-		
-		post.getParams().setCookiePolicy(CookiePolicy.RFC_2109);
+//		post.getParams().setCookiePolicy(CookiePolicy.RFC_2109);
 		String returnStr="";
 		String[] params = parames.split("&");
 		for(String param : params){
@@ -90,13 +99,40 @@ public class Httpservice {
 				System.out.println(hh.getName()+":"+hh.getValue());
 			}
 		} catch (HttpException e) {
-			e.printStackTrace();
+			throw new AppException("域名无法正常解析，服务器异常",e);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new AppException("访问无服务器读取异常",e);
 		}
 		return returnStr;
 	}
 	
+	/**
+	 * @author Henry
+	 * @see <p>发送邮件</p>
+	 * @param email
+	 * @param msg
+	 * @param content
+	 * @param orderId
+	 * @return
+	 */
+	public static String sendEmail(String email,String msg,String content,String orderId) throws AppException{
+		String returnStr="";
+		try{
+			returnStr=get(USER_EMAIL_URL,"email="+email+"&msg="+msg+"&content="+content+"&order_id="+orderId);
+		}catch(AppException e){
+			throw new AppException("[邮件发送]:"+e.getMessage(),e);
+		}
+		return returnStr;
+	}
+	
+	/**
+	 * @author Henry
+	 * @see<p>用户登录表团体版</P>
+	 * @param username
+	 * @param passwrod
+	 * @return
+	 * @throws AppException
+	 */
 	public static String LoginGRP(String username,String passwrod) throws AppException{
 		String postUrl = testBaseUrl+USER_SIGN_GRP;
 		String parames = "username="+username+"&password="+passwrod+"&act="+ACTION_GRP_LOGIN+"&type=1&is_ajax=1";
@@ -145,7 +181,13 @@ public class Httpservice {
 		return returnStr;
 	}
 	
-	
+	/**
+	 * @author Henry
+	 * @see<p>拿货信息 明细团体版</p>
+	 * @param subUrl
+	 * @return
+	 * @throws AppException
+	 */
 	public  static String getProductList(String subUrl) throws AppException{
 		Log.v("sysnSessionIdBefore", clientSessionId);
 		sysnSessionId();

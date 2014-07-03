@@ -16,4 +16,7 @@
 	<string name="product_syn">Synchronize</string>
 	<string name="fitler_isgettitle">IsGet</string>
 	<string name="fitler_areatitle">Area Name</string>
+	<string name="login_offline">Offline</string>
+	<string name="offlineModle">Offline</string>
+	<string name="onlineModle">Online</string>
 </resources>

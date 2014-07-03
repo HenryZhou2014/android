@@ -28,8 +28,9 @@ import com.jsdf.utils.Utils;
 import com.jsdf.view.ToastView;
 
 public class MainActivity extends Activity implements OnClickListener {
-	private ImageView back;
+//	private ImageView back;
 	private Button login;
+	private Button offline;
 	private EditText userName;
 	private EditText password;
 	private TextView register;
@@ -37,6 +38,8 @@ public class MainActivity extends Activity implements OnClickListener {
 	private String name;
 	private String psd;
 	private Handler handler;
+	public static final int MODLE_VALUE=200;
+	public static final String MODLE_NAME="MODLE";
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -46,23 +49,27 @@ public class MainActivity extends Activity implements OnClickListener {
         String usern=resource.getString(R.string.user_name_cannot_be_empty);
         String pass=resource.getString(R.string.password_cannot_be_empty);
         
-        back = (ImageView) findViewById(R.id.login_back);
+//        back = (ImageView) findViewById(R.id.login_back);
 		login = (Button) findViewById(R.id.login_login);
+		offline = (Button) findViewById(R.id.offlineBtn);
 		userName = (EditText) findViewById(R.id.login_name);
 		password = (EditText) findViewById(R.id.login_password);
 		register = (TextView) findViewById(R.id.login_register);
         register.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
         
-        back.setOnClickListener(this);
+//        back.setOnClickListener(this);
 		login.setOnClickListener(this);
 		register.setOnClickListener(this);
+		offline.setOnClickListener(this);
 		
 		 handler=new Handler(){
 		    	public void handleMessage(Message msg){
 		    		String[] str = (String[])msg.obj;
           		if("0".equals(str[0])){
           			Intent registerIntent = new Intent(context,ProductListActivity.class);
+          			registerIntent.putExtra(MODLE_NAME, "1");
 					startActivity(registerIntent);
+//					setResult(MODLE_VALUE, registerIntent);
 					context.finish();
 	      		}else{
 		    		ToastView toast = new ToastView(context, "登录失败："+str[1]);
@@ -83,8 +90,8 @@ public class MainActivity extends Activity implements OnClickListener {
         String pass=resource.getString(R.string.password_cannot_be_empty);
 		Intent intent;
 		switch(v.getId()) {
-		case R.id.login_back:
-			break;
+//		case R.id.login_back:
+//			break;
 		case R.id.login_login:
 			name = userName.getText().toString();
 			psd = password.getText().toString();
@@ -121,9 +128,21 @@ public class MainActivity extends Activity implements OnClickListener {
 //	            }).start();
 			}
 			break;
+		case R.id.offlineBtn:
+			ToastView toast = new ToastView(this, "启动离线模式");
+	        toast.setGravity(Gravity.CENTER, 0, 0);
+	        toast.show();
+			Intent registerIntent = new Intent(context,ProductListActivity.class);
+			registerIntent.putExtra(MODLE_NAME, "2");
+//			setResult(MODLE_VALUE, registerIntent);
+			startActivity(registerIntent);
+			context.finish();
+			
+			break;
 		case R.id.login_register:
 			intent = new Intent(this, RegisterActivity.class);
 			startActivityForResult(intent, 1);
+			
 			break;
 		}
 		

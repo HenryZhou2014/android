@@ -18,4 +18,7 @@
 	<string name="fitler_areatitle">档口名称</string>
 	<string name="isget_prompt">请选择是否拿货</string>
 	<string name="area_prompt">请选择拿货区域</string>
+	<string name="login_offline">离线</string>
+	<string name="offlineModle">离线模式</string>
+	<string name="onlineModle">在线模式</string>
 </resources>
