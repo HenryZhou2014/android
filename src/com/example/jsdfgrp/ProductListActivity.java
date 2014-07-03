@@ -24,9 +24,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -47,7 +49,7 @@ import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.ProductDataUtil;
 import com.jsdf.view.ToastView;
 
-public class ProductListActivity extends Activity implements OnItemSelectedListener {
+public class ProductListActivity extends Activity implements OnItemSelectedListener, OnGestureListener{
 	//生成动态数组，加入数据  
     ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>(); 
     //生成适配器的Item和动态数组对应的元素  
@@ -162,7 +164,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				return false;
 			}
        });
-          
+//       list.setOnClickListener(l)   
       //添加长按点击  
 //        list.setOnCreateContextMenuListener(new OnCreateContextMenuListener() {  
 //            @Override  
@@ -400,6 +402,44 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 			}
 		}
 		return productObject;
+	}
+
+	@Override
+	public boolean onDown(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean onFling(MotionEvent arg0, MotionEvent arg1, float arg2,
+			float arg3) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent arg0, MotionEvent arg1, float arg2,
+			float arg3) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onShowPress(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		return false;
 	}
     
 }
