@@ -30,6 +30,10 @@ public class Httpservice {
 	public static final String USER_SIGN_GRP="wosdf/privilege.php";
 	public static final String USER_EMAIL_URL = "wosdf/notice.php";
 	public static final String PRODUCT_SYNC_URL="wosdf/order.php";
+	public static final String GET_ONE_PRODUCT_URL="/wosdf/order.php";
+	
+	
+	
 	public static final String ACTION_GRP_LOGIN = "signin";
 	public static String clientSessionId="";
 	private static final String COOKIE_NAME="ECS_ID";
@@ -178,6 +182,48 @@ public class Httpservice {
 			throw new AppException("请求服务器异常",e);
 		}
 		Log.v("LOGIN_RESULT", returnStr);
+		return returnStr;
+	}
+	
+	/**
+	 * @see <p>联机同步单个拿货</p>
+	 * @param recid
+	 * @param flag
+	 * @return
+	 */
+	public static String productOneSync(String recid,String flag){
+//		return get(PRODUCT_SYNC_URL,"act=sync_order&"+parames);
+		String postUrl = testBaseUrl+GET_ONE_PRODUCT_URL;
+		PostMethod post  = new PostMethod(postUrl);
+		post.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,new DefaultHttpMethodRetryHandler());  //使用系统提供的默认的恢复策略
+		post.getParams().setParameter(HttpMethodParams.HTTP_CONTENT_CHARSET,"utf-8"); //编码
+		sysnSessionId();
+		String parames = "act=change_get&is_ajax=1&flag="+flag+"&recid="+recid;
+		String returnStr="";
+		String[] params = parames.split("&");
+		for(String param : params){
+			String[] tmpParam = param.split("=");
+			if(tmpParam.length==2){
+				post.addParameter(tmpParam[0], tmpParam[1]);
+			}
+		}
+		post.addParameter(COOKIE_NAME, clientSessionId);
+		
+		try {
+			int status  = client.executeMethod(post);
+			if(status!= HttpStatus.SC_OK){
+				System.err.println("Method failed: "+ post.getStatusLine());
+			    return status+"_ERROR";
+			}
+			returnStr = post.getResponseBodyAsString();
+		} catch (HttpException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return returnStr;
 	}
 	

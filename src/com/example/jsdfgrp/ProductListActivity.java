@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.sf.json.JSONObject;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -41,6 +43,7 @@ import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.jsdf.bean.MessageHandleBean;
 import com.jsdf.bean.OrderList;
 import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
@@ -66,6 +69,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private Spinner spinnerArea;
     private TextView productListTitle;
     
+    private Map<String,String> conditionCurrent = null;  //记录当前的搜索条件
     
     
     private String  selectAreaCode = "";
@@ -91,10 +95,25 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		
 	    handler=new Handler(){
 	    	public void handleMessage(Message msg){
-	    		ProductObject productObject=(ProductObject)msg.obj;//obj不一定是String类，可以是别的类，看用户具体的应用
-	    		ProductDataUtil.setProductObject(productObject);
-	    		
-	    		drawListView(ProductDataUtil.getProductObject(),listItem,ctx,list);
+	    		MessageHandleBean handleBean = (MessageHandleBean)msg.obj;
+	    		if(MessageHandleBean.PRODUCT_LIST_GETALL_CODE.equals(handleBean.getMsgType())){
+		    		ProductObject productObject=(ProductObject)handleBean.getData();//obj不一定是String类，可以是别的类，看用户具体的应用
+		    		ProductDataUtil.setProductObject(productObject);
+		    		drawListView(ProductDataUtil.getProductObject(),listItem,ctx,list);
+	    		}else if(MessageHandleBean.PRODUCT_LIST_ONE_CODE.equals(handleBean.getMsgType())){
+	    			String str = (String)handleBean.getData();
+	    			String[] reutunArray = str.split("\\|");
+	    			if(reutunArray[0].equals("0")){
+	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], "1");
+	    				if(conditionCurrent==null){ //只显示未拿货数据
+	    					conditionCurrent = new HashMap<String,String>();
+	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
+	    				}else{
+	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
+	    				}
+	    				reDrawListView(ctx,conditionCurrent);
+	    			}
+	    		}
 //	    		orderList = productObject.getOrder_list();
 //            	for(int i = 0; orderList!=null&&(i<orderList.size()) ; i++){
 //            		OrderList tmpOrderList = orderList.get(i);
@@ -154,10 +173,12 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //				ImageView itemImage = (ImageView)arg1.findViewById(R.id.ItemImage);
 //				itemImage.setImageResource(R.drawable.checkbox_checked);
 				OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
-
-			    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-			    reDrawListView(ctx,null);
-			    
+				if("1".equals(onlineModle)){
+				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+				    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id()).start();
+				}else if ("2".equals(onlineModle)){
+				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+				}
 //				ToastView toast = new ToastView(ctx,selectOrder.getEmail()+" : " + selectOrder.getMarket());
 //			    toast.setGravity(Gravity.CENTER, 0, 0);
 //			    toast.show();
@@ -291,6 +312,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		    Map<String,String> condition = new HashMap<String,String>();
 		    condition.put(ProductDataUtil.ISGET_NAME, isgetFlag);
 		    condition.put(ProductDataUtil.AREACODE_NAME, areaFlag);
+		    conditionCurrent= condition;
 		    reDrawListView(this,condition);
     	    break;
     	default:
@@ -480,6 +502,32 @@ class UpdateListView extends Thread{ //子线程更新界面
 	}
 }
 
+class UpdateOneProductStatus extends Thread{ //UPDATE ONE PRODUCT STATUS
+	private ProductListActivity context;
+	private String recid;
+	private String orderId;
+	public UpdateOneProductStatus(){
+		
+	}
+	
+	public UpdateOneProductStatus(ProductListActivity context,String recid,String orderId){
+		this.context = context;
+		this.recid = recid;
+		this.orderId = orderId;
+	}
+	
+	@Override
+	public void run() {
+		String returnStr= Httpservice.productOneSync(recid,"1");
+		JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
+		String returnCode =jsonObject.getString("error");
+    	Message message = Message.obtain();
+    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,returnCode+"|"+recid+"|"+orderId);
+    	context.getHandler().sendMessage(message) ;     	
+	}
+	
+}
+
 class GetProductThread extends Thread { //子线程去范围网络资源 
 	private ProductListActivity context;
 	public GetProductThread(){
@@ -504,7 +552,7 @@ class GetProductThread extends Thread { //子线程去范围网络资源
 	        toast.show();
 		}
     	Message message = Message.obtain();
-    	message.obj = productObject;
+    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_GETALL_CODE,productObject);
     	context.getHandler().sendMessage(message) ;     	
 	}
 	

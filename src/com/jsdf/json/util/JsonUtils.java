@@ -76,4 +76,10 @@ public class JsonUtils {
 		}
 		return code;
 	}
+	
+	
+	public static JSONObject strConvert2Json(String str){
+		JSONObject  jsonObj = JSONObject.fromString(str);
+		return jsonObj;
+	}
 }
