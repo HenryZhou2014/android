@@ -9,13 +9,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import net.sf.json.JSONObject;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -112,6 +112,30 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
 	    				}
 	    				reDrawListView(ctx,conditionCurrent);
+	    			}else{
+	    				ToastView toast = new ToastView(ctx,reutunArray[1]);
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}
+	    		}else if(MessageHandleBean.PRODUCT_SENDEMAIL_CODE.equals(handleBean.getMsgType())){
+	    			String str = (String)handleBean.getData();
+	    			String[] reutunArray = str.split("\\|");
+	    			if(reutunArray[0].equals("0")){
+//	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], "1");
+//	    				if(conditionCurrent==null){ //只显示未拿货数据
+//	    					conditionCurrent = new HashMap<String,String>();
+//	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
+//	    				}else{
+//	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
+//	    				}
+//	    				reDrawListView(ctx,conditionCurrent);
+	    				ToastView toast = new ToastView(ctx,"发送邮件成功");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}else{
+	    				ToastView toast = new ToastView(ctx,"发送邮件失败："+reutunArray[1]);
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
 	    			}
 	    		}
 //	    		orderList = productObject.getOrder_list();
@@ -159,7 +183,13 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
             @Override  
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,  
                     long arg3) {  
-//                setTitle("点击第"+arg2+"个项目");  
+            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
+				if("1".equals(onlineModle)){
+				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+				    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id()).start();
+				}else if ("2".equals(onlineModle)){
+				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+				}
             }  
         });  
        
@@ -170,18 +200,9 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 			@Override
 			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
-//				ImageView itemImage = (ImageView)arg1.findViewById(R.id.ItemImage);
-//				itemImage.setImageResource(R.drawable.checkbox_checked);
-				OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
-				if("1".equals(onlineModle)){
-				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-				    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id()).start();
-				}else if ("2".equals(onlineModle)){
-				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-				}
-//				ToastView toast = new ToastView(ctx,selectOrder.getEmail()+" : " + selectOrder.getMarket());
-//			    toast.setGravity(Gravity.CENTER, 0, 0);
-//			    toast.show();
+            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
+            	new SendEmail((ProductListActivity)ctx,selectOrder.getEmail(),URLEncoder.encode("拿货测试信息处理"),URLEncoder.encode(selectOrder.getContent()),selectOrder.getOrder_id()).start();
+            	
 				return false;
 			}
        });
@@ -501,6 +522,45 @@ class UpdateListView extends Thread{ //子线程更新界面
  	    list.setAdapter(listItemAdapter); 
 	}
 }
+class SendEmail extends Thread{ //SENDEMAIL
+	private ProductListActivity context;
+	private String email;
+	private String msg;
+	private String content;
+	private String orderId;
+	public SendEmail(){
+		
+	}
+	
+	public SendEmail(ProductListActivity context,String email,String msg,String content,String orderId){
+		this.context = context;
+		this.email = email;
+		this.msg = msg;
+		this.content = content;
+		this.orderId = orderId;
+	}
+	
+	@Override
+	public void run() {
+		String returnStr;
+		Message message = Message.obtain();
+		try {
+			returnStr = Httpservice.sendEmail(email, msg, content, orderId);
+			JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
+			String returnCode =jsonObject.getString("error");
+			String msg = jsonObject.getString("msg");
+	    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SENDEMAIL_CODE,returnCode+"|"+msg);
+	    	context.getHandler().sendMessage(message) ;    
+		} catch (AppException e) {
+			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SENDEMAIL_CODE,"1|"+msg);
+	    	context.getHandler().sendMessage(message) ;    
+		}
+	 	
+	}
+	
+}
+
+
 
 class UpdateOneProductStatus extends Thread{ //UPDATE ONE PRODUCT STATUS
 	private ProductListActivity context;
@@ -518,12 +578,19 @@ class UpdateOneProductStatus extends Thread{ //UPDATE ONE PRODUCT STATUS
 	
 	@Override
 	public void run() {
-		String returnStr= Httpservice.productOneSync(recid,"1");
-		JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
-		String returnCode =jsonObject.getString("error");
-    	Message message = Message.obtain();
-    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,returnCode+"|"+recid+"|"+orderId);
-    	context.getHandler().sendMessage(message) ;     	
+		String returnStr;
+		Message message = Message.obtain();
+		try {
+			returnStr = Httpservice.productOneSync(recid,"1");
+			JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
+			String returnCode =jsonObject.getString("error");
+	    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,returnCode+"|"+recid+"|"+orderId);
+	    	context.getHandler().sendMessage(message) ;    
+		} catch (AppException e) {
+			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,"1|"+e.getMessage()+"|"+orderId);
+	    	context.getHandler().sendMessage(message) ;    
+		}
+	 	
 	}
 	
 }

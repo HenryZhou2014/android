@@ -78,8 +78,13 @@ public class JsonUtils {
 	}
 	
 	
-	public static JSONObject strConvert2Json(String str){
-		JSONObject  jsonObj = JSONObject.fromString(str);
+	public static JSONObject strConvert2Json(String str) throws AppException{
+		JSONObject  jsonObj =null;
+		try{
+			jsonObj= JSONObject.fromString(str);
+		}catch(Exception e){
+			throw new AppException("拿单请求返回数据json转换异常",e);
+		}
 		return jsonObj;
 	}
 }

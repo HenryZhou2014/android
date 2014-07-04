@@ -3,7 +3,7 @@ package com.jsdf.bean;
 public class MessageHandleBean {
 	public static final String PRODUCT_LIST_ONE_CODE = "UPDATEONE";
 	public static final String PRODUCT_LIST_GETALL_CODE="GETALL";
-	
+	public static final String PRODUCT_SENDEMAIL_CODE="SENDEMAIL";
 	private String msgType;
 	private Object data;
 	

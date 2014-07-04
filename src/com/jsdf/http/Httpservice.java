@@ -190,8 +190,9 @@ public class Httpservice {
 	 * @param recid
 	 * @param flag
 	 * @return
+	 * @throws AppException 
 	 */
-	public static String productOneSync(String recid,String flag){
+	public static String productOneSync(String recid,String flag) throws AppException{
 //		return get(PRODUCT_SYNC_URL,"act=sync_order&"+parames);
 		String postUrl = testBaseUrl+GET_ONE_PRODUCT_URL;
 		PostMethod post  = new PostMethod(postUrl);
@@ -217,11 +218,9 @@ public class Httpservice {
 			}
 			returnStr = post.getResponseBodyAsString();
 		} catch (HttpException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new AppException("域名无法正常解析，服务器异常",e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new AppException("域名无法正常解析，服务器异常",e);
 		}
 		
 		return returnStr;
