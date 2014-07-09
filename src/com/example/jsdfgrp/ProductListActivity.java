@@ -68,7 +68,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private Spinner spinnerIsGet;  
     private Spinner spinnerArea;
     private TextView productListTitle;
-    
+    private int selectIndex = 1;
     private Map<String,String> conditionCurrent = null;  //记录当前的搜索条件
     
     
@@ -107,9 +107,9 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], "1");
 	    				if(conditionCurrent==null){ //只显示未拿货数据
 	    					conditionCurrent = new HashMap<String,String>();
-	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
+//	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
 	    				}else{
-	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
+//	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
 	    				}
 	    				reDrawListView(ctx,conditionCurrent);
 	    			}else{
@@ -190,6 +190,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				}else if ("2".equals(onlineModle)){
 				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
 				}
+				selectIndex = arg2;
             }  
         });  
        
@@ -377,6 +378,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
  	         
  	    //添加并且显示  
  	    list.setAdapter(listItemAdapter);
+ 	   list.setSelection(selectIndex);
 	}
 	
 	public void reDrawListView(Context context,Map<String,String> condition){
