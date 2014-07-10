@@ -238,6 +238,9 @@ public class Httpservice {
 		sysnSessionId();
 		Log.v("sysnSessionIdAfter", clientSessionId);
 		System.out.println("getProductList sessionId:"+clientSessionId);
+		while(clientSessionId==null){
+			sysnSessionId();
+		}
 		String getUrl = testBaseUrl+subUrl+"?"+"act=mobilelist&type=1&is_ajax=1";
 		getUrl += "&"+COOKIE_NAME + "=" +clientSessionId;
 		System.out.println("getUrl:"+getUrl);

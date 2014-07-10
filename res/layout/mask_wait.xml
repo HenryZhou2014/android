@@ -1,0 +1,22 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:layout_width="wrap_content" 
+    android:layout_height="wrap_content" 
+    android:orientation="vertical" > 
+    <LinearLayout 
+        android:layout_width="match_parent" 
+        android:layout_height="wrap_content" 
+         > 
+      <!-- 
+        <ImageView 
+            android:id="@+id/load" 
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content" 
+            android:src="@drawable/loading21" /> 
+      -->  
+		<com.jsdf.view.MyGifView
+		    android:id="@+id/load2"  
+       		android:layout_height="wrap_content"  
+       		android:layout_width="wrap_content" /> 
+    </LinearLayout> 
+</LinearLayout> 

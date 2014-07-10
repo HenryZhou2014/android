@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -50,6 +51,7 @@ import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.ProductDataUtil;
+import com.jsdf.view.LoadView;
 import com.jsdf.view.ToastView;
 
 public class ProductListActivity extends Activity implements OnItemSelectedListener, OnGestureListener{
@@ -70,8 +72,8 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private TextView productListTitle;
     private int selectIndex = 1;
     private Map<String,String> conditionCurrent = null;  //记录当前的搜索条件
-    
-    
+    private GestureDetector gestureScanner; 
+    private LoadView loadView = null;
     private String  selectAreaCode = "";
     private String  selectIsGetCode = "";
     private HashMap<String, Object> map ;
@@ -91,7 +93,28 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		
 		//将可选内容与ArrayAdapter连接起来   
 		String[] colors={"已拿","未拿"}; 
-       
+		loadView = new LoadView(this);
+		
+		gestureScanner = new GestureDetector(this);    
+	    gestureScanner.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener(){   
+	      public boolean onDoubleTap(MotionEvent e) {   
+	        //双击时产生一次  
+	        Log.v("test", "onDoubleTap");  
+	        return false;   
+	      }  
+	      public boolean onDoubleTapEvent(MotionEvent e) {   
+	        //双击时产生两次  
+	        Log.v("test", "onDoubleTapEvent");  
+	        return false;  
+	      }   
+	      public boolean onSingleTapConfirmed(MotionEvent e) {   
+	        //短快的点击算一次单击  
+	        Log.v("test", "onSingleTapConfirmed");  
+	        return false;   
+	      }   
+	    });  
+		
+		
 		
 	    handler=new Handler(){
 	    	public void handleMessage(Message msg){
@@ -164,12 +187,14 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    if("1".equals(onlineModle)){//Online Modle
 	    	new GetProductThread(this).start(); //通过子线程获取网络数据，更新子线程
 	    	productListTitle.setText(R.string.onlineModle);
+	    	synBtn.setText(R.string.product_cache);
 	    }else if("2".equals(onlineModle)){ //Offline Modle
 	    	try {
 	    		ProductObject offObjct = getCache();
 				drawListView(offObjct,listItem,ctx,list);
 				ProductDataUtil.setProductObject(offObjct);
 				productListTitle.setText(R.string.offlineModle);
+				synBtn.setText(R.string.product_syn);
 			} catch (AppException e) {
 				ToastView toast = new ToastView(ctx,e.getMessage());
 			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -191,6 +216,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
 				}
 				selectIndex = arg2;
+				Log.v("shortClick", "shortClick");
             }  
         });  
        
@@ -203,7 +229,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 					int arg2, long arg3) {
             	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
             	new SendEmail((ProductListActivity)ctx,selectOrder.getEmail(),URLEncoder.encode("拿货测试信息处理"),URLEncoder.encode(selectOrder.getContent()),selectOrder.getOrder_id()).start();
-            	
+            	Log.v("longClick", "longClick");
 				return false;
 			}
        });
@@ -223,15 +249,21 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 			@Override
 			public void onClick(View arg0) {
 				try {
-					setCache(ProductDataUtil.getProductObject());
-					ProductObject cacheObj = getCache();
+//					ProductObject cacheObj = getCache();
 //					System.out.println(cacheObj);
 //					System.out.println(cacheObj.getOrder_list());
 //					if(cacheObj.getOrder_list()!=null)
 //						System.out.println(cacheObj.getOrder_list());
-					ToastView toast = new ToastView(ctx,"同步成功");
-				    toast.setGravity(Gravity.CENTER, 0, 0);
-				    toast.show();
+//					loadView.show();
+
+					 if("1".equals(onlineModle)){//Online Modle
+							setCache(ProductDataUtil.getProductObject());
+							ToastView toast = new ToastView(ctx,"离线成功");
+						    toast.setGravity(Gravity.CENTER, 0, 0);
+						    toast.show();
+				    }else if("2".equals(onlineModle)){ //Offline Modle
+				    	
+				    }
 				} catch (AppException e) {
 					ToastView toast = new ToastView(ctx,e.getMessage());
 				    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -363,10 +395,15 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     		OrderList tmpOrderList = orderList.get(i);
     		ProductDataUtil.cacheListViewData(i, tmpOrderList);
     		map = new HashMap<String, Object>();  
-    		if(tmpOrderList.getIs_get().equals("0")){
-    			map.put("ItemImage", R.drawable.checkbox_unchecked);//图像资源的ID  
+    		if(tmpOrderList.getIs_get().equals("0") && !ProductDataUtil.isNotNull(tmpOrderList.getContent())){
+    			map.put("ItemImage", R.drawable.checkbox_unselect);//图像资源的ID  
+    		}else if(tmpOrderList.getIs_get().equals("1") && ProductDataUtil.isNotNull(tmpOrderList.getContent())){
+    			map.put("ItemImage", R.drawable.checkbox_selected);//图像资源的ID  
+    		}
+    		else if(tmpOrderList.getIs_get().equals("0") && ProductDataUtil.isNotNull(tmpOrderList.getContent())){
+    			map.put("ItemImage", R.drawable.email_32);//图像资源的ID  
     		}else{
-    			map.put("ItemImage", R.drawable.checkbox_checked);//图像资源的ID  
+    			map.put("ItemImage", R.drawable.checkbox_unselect);//图像资源的ID 
     		}
             map.put("ItemTitle", tmpOrderList.getMarket());  
             map.put("ItemText", tmpOrderList.getFloor()+"F(" +tmpOrderList.getPurchase_code()+ ") "+tmpOrderList.getGoods_attr() +" -"+tmpOrderList.getGoods_number() +"" +
@@ -451,39 +488,39 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 
 	@Override
 	public boolean onDown(MotionEvent arg0) {
-		// TODO Auto-generated method stub
+		Log.v("onDown", "onDown");
 		return false;
 	}
 
 	@Override
 	public boolean onFling(MotionEvent arg0, MotionEvent arg1, float arg2,
 			float arg3) {
-		// TODO Auto-generated method stub
+		Log.v("onFling", "onFling");
 		return false;
 	}
 
 	@Override
 	public void onLongPress(MotionEvent arg0) {
 		// TODO Auto-generated method stub
-		
+		Log.v("onLongPress", "onLongPress");
 	}
 
 	@Override
 	public boolean onScroll(MotionEvent arg0, MotionEvent arg1, float arg2,
 			float arg3) {
-		// TODO Auto-generated method stub
+		Log.v("onScroll", "onScroll");
 		return false;
 	}
 
 	@Override
 	public void onShowPress(MotionEvent arg0) {
 		// TODO Auto-generated method stub
-		
+		Log.v("onShowPress", "onShowPress");
 	}
 
 	@Override
 	public boolean onSingleTapUp(MotionEvent arg0) {
-		// TODO Auto-generated method stub
+		Log.v("onSingleTapUp", "onSingleTapUp");
 		return false;
 	}
     
