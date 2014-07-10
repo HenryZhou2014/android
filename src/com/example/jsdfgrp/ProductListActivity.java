@@ -79,6 +79,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private HashMap<String, Object> map ;
     private static final String CACHE_FILE = "cache.dat"; //缓存文件
     private static String onlineModle = "1";  //1-onlineModle,2-offlineModel
+    private boolean longClickFlag = false; //长按和点击的控制
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
@@ -151,7 +152,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //	    				}else{
 //	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
 //	    				}
-//	    				reDrawListView(ctx,conditionCurrent);
+	    				reDrawListView(ctx,conditionCurrent);
 	    				ToastView toast = new ToastView(ctx,"发送邮件成功");
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
@@ -160,6 +161,10 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
 	    			}
+	    		}else if(MessageHandleBean.EXCEPTION_CODE.equals(handleBean.getMsgType())){
+	    			ToastView toast = new ToastView(ctx,(String)handleBean.getData());
+    			    toast.setGravity(Gravity.CENTER, 0, 0);
+    			    toast.show();
 	    		}
 //	    		orderList = productObject.getOrder_list();
 //            	for(int i = 0; orderList!=null&&(i<orderList.size()) ; i++){
@@ -208,15 +213,18 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
             @Override  
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,  
                     long arg3) {  
-            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
-				if("1".equals(onlineModle)){
-				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-				    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id()).start();
-				}else if ("2".equals(onlineModle)){
-				    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-				}
-				selectIndex = arg2;
-				Log.v("shortClick", "shortClick");
+            	if(!longClickFlag){ //长按没有触发
+	            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
+					if("1".equals(onlineModle)){
+					    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+					    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id()).start();
+					}else if ("2".equals(onlineModle)){
+					    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+					}
+					selectIndex = arg2;
+					Log.v("shortClick", "shortClick");
+            	}
+            	longClickFlag=false;
             }  
         });  
        
@@ -228,8 +236,12 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
             	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
-            	new SendEmail((ProductListActivity)ctx,selectOrder.getEmail(),URLEncoder.encode("拿货测试信息处理"),URLEncoder.encode(selectOrder.getContent()),selectOrder.getOrder_id()).start();
+            	String emailMsg = "拿货测试信息处理";
+            	ProductDataUtil.updateOnEmailContent(selectOrder.getOrder_id(), emailMsg);
+            	new SendEmail((ProductListActivity)ctx,selectOrder.getEmail(),URLEncoder.encode(emailMsg),URLEncoder.encode(selectOrder.getContent()),selectOrder.getOrder_id()).start();
             	Log.v("longClick", "longClick");
+            	longClickFlag=true;
+            	selectIndex = arg2;
 				return false;
 			}
        });
@@ -395,16 +407,16 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     		OrderList tmpOrderList = orderList.get(i);
     		ProductDataUtil.cacheListViewData(i, tmpOrderList);
     		map = new HashMap<String, Object>();  
-    		if(tmpOrderList.getIs_get().equals("0") && !ProductDataUtil.isNotNull(tmpOrderList.getContent())){
-    			map.put("ItemImage", R.drawable.checkbox_unselect);//图像资源的ID  
-    		}else if(tmpOrderList.getIs_get().equals("1") && ProductDataUtil.isNotNull(tmpOrderList.getContent())){
+    		if((ProductDataUtil.isNotNull(tmpOrderList.getContent())&&tmpOrderList.getIs_get().equals("1")) ||tmpOrderList.getIs_get().equals("1")){
     			map.put("ItemImage", R.drawable.checkbox_selected);//图像资源的ID  
+    			
+    		}else if(ProductDataUtil.isNotNull(tmpOrderList.getContent())){
+    			map.put("ItemImage", R.drawable.email_32);//图像资源的ID 
     		}
-    		else if(tmpOrderList.getIs_get().equals("0") && ProductDataUtil.isNotNull(tmpOrderList.getContent())){
-    			map.put("ItemImage", R.drawable.email_32);//图像资源的ID  
-    		}else{
-    			map.put("ItemImage", R.drawable.checkbox_unselect);//图像资源的ID 
+    		else if(tmpOrderList.getIs_get().equals("0")){
+    			map.put("ItemImage", R.drawable.checkbox_unselect);//图像资源的ID  
     		}
+    		
             map.put("ItemTitle", tmpOrderList.getMarket());  
             map.put("ItemText", tmpOrderList.getFloor()+"F(" +tmpOrderList.getPurchase_code()+ ") "+tmpOrderList.getGoods_attr() +" -"+tmpOrderList.getGoods_number() +"" +
             		"件*P"+tmpOrderList.getGoods_price() + " [" +tmpOrderList.getShort_order_time()+"]");  
@@ -415,7 +427,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
  	         
  	    //添加并且显示  
  	    list.setAdapter(listItemAdapter);
- 	   list.setSelection(selectIndex);
+ 	    list.setSelection(selectIndex);
 	}
 	
 	public void reDrawListView(Context context,Map<String,String> condition){
@@ -648,16 +660,20 @@ class GetProductThread extends Thread { //子线程去范围网络资源
 	public void run() {
 		ProductObject productObject=null;
 		String productStr ="";
+		Message message = Message.obtain();
 		try {
 			productStr= Httpservice.getProductList(Httpservice.TEAM_GET_PRODUCT);
 	    	Log.v("SEESIONID", Httpservice.clientSessionId);
 			productObject = JsonUtils.convertProductFromJsonStr(productStr);
 		} catch (AppException e) {
-			ToastView toast = new ToastView(context, e.getMessage());
-	        toast.setGravity(Gravity.CENTER, 0, 0);
-	        toast.show();
+//			ToastView toast = new ToastView(context, e.getMessage());
+//	        toast.setGravity(Gravity.CENTER, 0, 0);
+//	        toast.show();
+			message.obj = new MessageHandleBean(MessageHandleBean.EXCEPTION_CODE,e.getMessage());
+	    	context.getHandler().sendMessage(message) ;
+	    	return;
 		}
-    	Message message = Message.obtain();
+    	
     	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_GETALL_CODE,productObject);
     	context.getHandler().sendMessage(message) ;     	
 	}

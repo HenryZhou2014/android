@@ -55,6 +55,40 @@ public class ProductDataUtil {
 		return true;
 	}
 	
+	/**
+	 * @author Henry
+	 * @see <p>ÓÊ¼þÄÚÈÝ</p>
+	 * @param orderId
+	 * @param content
+	 * @return
+	 */
+	public static boolean updateOnEmailContent(String orderId,String content){
+		List<OrderList> swichList = new ArrayList<OrderList>();
+		List<OrderList> tmpList =  productObject.getOrder_list();
+		try{
+			for(int i = 0 ; tmpList!=null&& i< tmpList.size();i++ ){
+				if(tmpList.get(i).getOrder_id().equals(orderId))
+				{
+					OrderList  switchOrder = tmpList.get(i);
+					String tmpContent = switchOrder.getContent();
+					if(isNotNull(tmpContent)){
+						tmpContent +=","+content;
+					}else{
+						tmpContent =  content;
+					}
+					switchOrder.setContent(tmpContent);
+					swichList.add(switchOrder);
+				}else{
+					swichList.add(tmpList.get(i));
+				}
+			}
+			productObject.setOrder_list(swichList);
+		}catch(Exception e){
+			return false;
+		}
+		return true;
+	}
+	
 	public static ProductObject searchProduct(Map<String,String> condition){
 		ProductObject returnObj = new ProductObject();
 		ProductObject catchProduct = getProductObject();
