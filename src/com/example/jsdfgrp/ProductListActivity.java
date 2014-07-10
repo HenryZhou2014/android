@@ -22,6 +22,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -33,11 +34,14 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.SimpleAdapter;
@@ -51,6 +55,7 @@ import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.ProductDataUtil;
+import com.jsdf.view.EmailDialog;
 import com.jsdf.view.LoadView;
 import com.jsdf.view.ToastView;
 
@@ -70,7 +75,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private Spinner spinnerIsGet;  
     private Spinner spinnerArea;
     private TextView productListTitle;
-    private int selectIndex = 1;
+    private int selectIndex = 0;
     private Map<String,String> conditionCurrent = null;  //记录当前的搜索条件
     private GestureDetector gestureScanner; 
     private LoadView loadView = null;
@@ -80,6 +85,11 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private static final String CACHE_FILE = "cache.dat"; //缓存文件
     private static String onlineModle = "1";  //1-onlineModle,2-offlineModel
     private boolean longClickFlag = false; //长按和点击的控制
+    private EmailDialog emailDialog = null;
+    private EditText emailContent;
+    private OrderList dbClickSelectOrder;
+    
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
@@ -91,29 +101,10 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	     //绑定Layout里面的ListView  
 		list= (ListView) findViewById(R.id.ListView01);  
 		productListTitle= (TextView)findViewById(R.id.productListTitleId);  
-		
+		emailDialog = new EmailDialog(this,R.style.EmailDialog);
 		//将可选内容与ArrayAdapter连接起来   
 		String[] colors={"已拿","未拿"}; 
 		loadView = new LoadView(this);
-		
-		gestureScanner = new GestureDetector(this);    
-	    gestureScanner.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener(){   
-	      public boolean onDoubleTap(MotionEvent e) {   
-	        //双击时产生一次  
-	        Log.v("test", "onDoubleTap");  
-	        return false;   
-	      }  
-	      public boolean onDoubleTapEvent(MotionEvent e) {   
-	        //双击时产生两次  
-	        Log.v("test", "onDoubleTapEvent");  
-	        return false;  
-	      }   
-	      public boolean onSingleTapConfirmed(MotionEvent e) {   
-	        //短快的点击算一次单击  
-	        Log.v("test", "onSingleTapConfirmed");  
-	        return false;   
-	      }   
-	    });  
 		
 		
 		
@@ -128,7 +119,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    			String str = (String)handleBean.getData();
 	    			String[] reutunArray = str.split("\\|");
 	    			if(reutunArray[0].equals("0")){
-	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], "1");
+	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], reutunArray[3]);
 	    				if(conditionCurrent==null){ //只显示未拿货数据
 	    					conditionCurrent = new HashMap<String,String>();
 //	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
@@ -156,6 +147,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    				ToastView toast = new ToastView(ctx,"发送邮件成功");
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
+	    			    emailDialog.hide();
 	    			}else{
 	    				ToastView toast = new ToastView(ctx,"发送邮件失败："+reutunArray[1]);
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -215,9 +207,15 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
                     long arg3) {  
             	if(!longClickFlag){ //长按没有触发
 	            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
+	            	String getFlag = selectOrder.getIs_get();
 					if("1".equals(onlineModle)){
-					    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-					    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id()).start();
+						if("0".equals(getFlag)){//拿货
+							ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"1").start();
+						}else{//取消拿货
+							ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "0");
+						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"0").start();
+						}
 					}else if ("2".equals(onlineModle)){
 					    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
 					}
@@ -235,13 +233,80 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 			@Override
 			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
-            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
-            	String emailMsg = "拿货测试信息处理";
-            	ProductDataUtil.updateOnEmailContent(selectOrder.getOrder_id(), emailMsg);
-            	new SendEmail((ProductListActivity)ctx,selectOrder.getEmail(),URLEncoder.encode(emailMsg),URLEncoder.encode(selectOrder.getContent()),selectOrder.getOrder_id()).start();
-            	Log.v("longClick", "longClick");
+            	dbClickSelectOrder= ProductDataUtil.getCacheFromListByIndex(arg2);
             	longClickFlag=true;
             	selectIndex = arg2;
+            	emailDialog.show();
+            	Button emailOk = (Button) emailDialog.findViewById(R.id.dialog_button_ok);//确定
+            	Button emailConcel = (Button) emailDialog.findViewById(R.id.dialog_button_cancel);//取消
+            	Button emailTommow = (Button) emailDialog.findViewById(R.id.dialog_button_tommow);  //明天有
+            	Button emailDown = (Button) emailDialog.findViewById(R.id.dialog_button_down); //下架
+            	Button emailProError = (Button) emailDialog.findViewById(R.id.dialog_button_prod_err); //货品信息错误
+            	emailContent = (EditText)emailDialog.findViewById(R.id.emailContentId);
+            	
+            	emailOk.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						// TODO Auto-generated method stub
+						String emailMsg = emailContent.getText().toString();
+						String emailContext = dbClickSelectOrder.getFloor()+"F(" +dbClickSelectOrder.getPurchase_code()+ ") "+dbClickSelectOrder.getGoods_attr() +" -"+dbClickSelectOrder.getGoods_number() +"" +
+			            		"件*P"+dbClickSelectOrder.getGoods_price() + " [" +dbClickSelectOrder.getShort_order_time()+"]";
+		            	ProductDataUtil.updateOnEmailContent(dbClickSelectOrder.getOrder_id(), emailMsg);
+		            	new SendEmail((ProductListActivity)ctx,dbClickSelectOrder.getEmail(),URLEncoder.encode(emailMsg),URLEncoder.encode(emailContext),dbClickSelectOrder.getOrder_id()).start();
+		            	emailContent.clearFocus();
+		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+					}
+				});
+            	
+            	emailConcel.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						emailDialog.hide();
+					}
+				});
+            	
+            	emailTommow.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						String emailMsg = ((Resources) getBaseContext().getResources()).getString(R.string.dialog_email_tommow);
+						String emailContext = dbClickSelectOrder.getFloor()+"F(" +dbClickSelectOrder.getPurchase_code()+ ") "+dbClickSelectOrder.getGoods_attr() +" -"+dbClickSelectOrder.getGoods_number() +"" +
+			            		"件*P"+dbClickSelectOrder.getGoods_price() + " [" +dbClickSelectOrder.getShort_order_time()+"]";
+		            	ProductDataUtil.updateOnEmailContent(dbClickSelectOrder.getOrder_id(), emailMsg);
+		            	new SendEmail((ProductListActivity)ctx,dbClickSelectOrder.getEmail(),URLEncoder.encode(emailMsg),URLEncoder.encode(emailContext),dbClickSelectOrder.getOrder_id()).start();
+		            	emailContent.clearFocus();
+		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+					}
+				});
+            	
+            	emailDown.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						String emailMsg = ((Resources) getBaseContext().getResources()).getString(R.string.dialog_email_down);
+						String emailContext = dbClickSelectOrder.getFloor()+"F(" +dbClickSelectOrder.getPurchase_code()+ ") "+dbClickSelectOrder.getGoods_attr() +" -"+dbClickSelectOrder.getGoods_number() +"" +
+			            		"件*P"+dbClickSelectOrder.getGoods_price() + " [" +dbClickSelectOrder.getShort_order_time()+"]";
+		            	ProductDataUtil.updateOnEmailContent(dbClickSelectOrder.getOrder_id(), emailMsg);
+		            	new SendEmail((ProductListActivity)ctx,dbClickSelectOrder.getEmail(),URLEncoder.encode(emailMsg),URLEncoder.encode(emailContext),dbClickSelectOrder.getOrder_id()).start();
+		            	emailContent.clearFocus();
+		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+					}
+				});
+            	
+            	emailProError.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View arg0) {
+						String emailMsg = ((Resources) getBaseContext().getResources()).getString(R.string.dialog_email_product_err);
+						String emailContext = dbClickSelectOrder.getFloor()+"F(" +dbClickSelectOrder.getPurchase_code()+ ") "+dbClickSelectOrder.getGoods_attr() +" -"+dbClickSelectOrder.getGoods_number() +"" +
+			            		"件*P"+dbClickSelectOrder.getGoods_price() + " [" +dbClickSelectOrder.getShort_order_time()+"]";
+		            	ProductDataUtil.updateOnEmailContent(dbClickSelectOrder.getOrder_id(), emailMsg);
+		            	new SendEmail((ProductListActivity)ctx,dbClickSelectOrder.getEmail(),URLEncoder.encode(emailMsg),URLEncoder.encode(emailContext),dbClickSelectOrder.getOrder_id()).start();
+		            	emailContent.clearFocus();
+		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+					}
+				});
 				return false;
 			}
        });
@@ -617,14 +682,16 @@ class UpdateOneProductStatus extends Thread{ //UPDATE ONE PRODUCT STATUS
 	private ProductListActivity context;
 	private String recid;
 	private String orderId;
+	private String getFlag;
 	public UpdateOneProductStatus(){
 		
 	}
 	
-	public UpdateOneProductStatus(ProductListActivity context,String recid,String orderId){
+	public UpdateOneProductStatus(ProductListActivity context,String recid,String orderId,String getFlag){
 		this.context = context;
 		this.recid = recid;
 		this.orderId = orderId;
+		this.getFlag = getFlag;
 	}
 	
 	@Override
@@ -632,13 +699,13 @@ class UpdateOneProductStatus extends Thread{ //UPDATE ONE PRODUCT STATUS
 		String returnStr;
 		Message message = Message.obtain();
 		try {
-			returnStr = Httpservice.productOneSync(recid,"1");
+			returnStr = Httpservice.productOneSync(recid,getFlag);
 			JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
 			String returnCode =jsonObject.getString("error");
-	    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,returnCode+"|"+recid+"|"+orderId);
+	    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,returnCode+"|"+recid+"|"+orderId+"|"+getFlag);
 	    	context.getHandler().sendMessage(message) ;    
 		} catch (AppException e) {
-			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,"1|"+e.getMessage()+"|"+orderId);
+			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_ONE_CODE,"1|"+e.getMessage()+"|"+orderId+"|"+getFlag);
 	    	context.getHandler().sendMessage(message) ;    
 		}
 	 	

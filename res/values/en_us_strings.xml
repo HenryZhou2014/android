@@ -20,4 +20,5 @@
 	<string name="login_offline">Offline</string>
 	<string name="offlineModle">Offline</string>
 	<string name="onlineModle">Online</string>
+	<string name="dialog_email_promt">Email Content</string>
 </resources>

@@ -22,4 +22,8 @@
 	<string name="login_offline">离线</string>
 	<string name="offlineModle">离线模式</string>
 	<string name="onlineModle">在线模式</string>
+	<string name="dialog_email_promt">邮件信息</string>
+	<string name="dialog_email_tommow">明天有</string>
+	<string name="dialog_email_down">下架</string>
+	<string name="dialog_email_product_err">货品信息错误</string>
 </resources>
