@@ -79,8 +79,11 @@ public class Httpservice {
 	
 	public static String post(String subUrl,String parames) throws AppException{
 		sysnSessionId();
+		Log.v("clientSessionId", clientSessionId );
 		String postUrl = testBaseUrl+subUrl+"&"+COOKIE_NAME+"="+clientSessionId;
 		System.out.println("postUrl:"+postUrl);
+		Log.v("postUrl", postUrl );
+		Log.v("parames", parames );
 		PostMethod post  = new PostMethod(postUrl);
 		post.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,new DefaultHttpMethodRetryHandler());  //使用系统提供的默认的恢复策略
 		post.getParams().setParameter(HttpMethodParams.HTTP_CONTENT_CHARSET,"utf-8"); //编码
@@ -128,6 +131,48 @@ public class Httpservice {
 		}
 		return returnStr;
 	}
+	/**
+	 * @author Henry
+	 * @see <p>Sycn all product</P>
+	 * @param parames
+	 * @return
+	 * @throws AppException
+	 */
+	public static String productSync(String parames) throws AppException{
+		parames = "orders="+parames;
+		String returnStr="";
+		sysnSessionId();
+		Log.v("clientSessionId", clientSessionId );
+		String postUrl = testBaseUrl+PRODUCT_SYNC_URL+"?"+COOKIE_NAME+"="+clientSessionId+"&act=sync_order";
+		System.out.println("postUrl:"+postUrl);
+		Log.v("postUrl", postUrl );
+		Log.v("parames", parames );
+		PostMethod post  = new PostMethod(postUrl);
+		post.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,new DefaultHttpMethodRetryHandler());  //使用系统提供的默认的恢复策略
+		post.getParams().setParameter(HttpMethodParams.HTTP_CONTENT_CHARSET,"utf-8"); //编码
+		String[] params = parames.split("&");
+		for(String param : params){
+			String[] tmpParam = param.split("=");
+			post.addParameter(tmpParam[0], tmpParam[1]);
+		}
+		try {
+			int status = client.executeMethod(post);
+			if(status!= HttpStatus.SC_OK){
+				System.err.println("Method failed: "+ post.getStatusLine());
+			    return status+"_ERROR";
+			}
+			returnStr = post.getResponseBodyAsString();
+			Header[] h = post.getResponseHeaders();
+			for(Header hh:h){
+				System.out.println(hh.getName()+":"+hh.getValue());
+			}
+		} catch (HttpException e) {
+			throw new AppException("域名无法正常解析，服务器异常",e);
+		} catch (IOException e) {
+			throw new AppException("访问无服务器读取异常",e);
+		}
+		return returnStr;
+	}
 	
 	/**
 	 * @author Henry
@@ -169,7 +214,7 @@ public class Httpservice {
 			    return status+"_ERROR";
 			}
 			returnStr = post.getResponseBodyAsString();
-			
+			Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
 			
 		}catch(UnknownHostException e){
 			Log.v("getProductList EXCPTION",e.getMessage());

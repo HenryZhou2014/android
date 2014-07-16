@@ -55,6 +55,7 @@ import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.ProductDataUtil;
+import com.jsdf.utils.Utils;
 import com.jsdf.view.EmailDialog;
 import com.jsdf.view.LoadView;
 import com.jsdf.view.ToastView;
@@ -153,6 +154,26 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
 	    			}
+	    		}else if(MessageHandleBean.PRODUCT_SYCNALL_CODE.equals(handleBean.getMsgType())){
+	    			String str = (String)handleBean.getData();
+	    			String[] reutunArray = str.split("\\|");
+	    			if(reutunArray[0].equals("000")){
+	    				//reDrawListView(ctx,conditionCurrent);
+	    				ToastView toast = new ToastView(ctx,"同步成功");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			    try {
+							setCache(new ProductObject());
+						} catch (AppException e) {
+							toast = new ToastView(ctx,"[清空缓存错误！] " + e.getMessage());
+		    			    toast.setGravity(Gravity.CENTER, 0, 0);
+		    			    toast.show();
+						}
+	    			}else{
+	    				ToastView toast = new ToastView(ctx,"同步失败"+reutunArray[1]);
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}
 	    		}else if(MessageHandleBean.EXCEPTION_CODE.equals(handleBean.getMsgType())){
 	    			ToastView toast = new ToastView(ctx,(String)handleBean.getData());
     			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -217,7 +238,15 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"0").start();
 						}
 					}else if ("2".equals(onlineModle)){
-					    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+						try{
+						    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+						    setCache(ProductDataUtil.getProductObject());
+						    reDrawListView(ctx,conditionCurrent);
+						} catch (AppException e) {
+							ToastView toast = new ToastView(ctx,e.getMessage());
+						    toast.setGravity(Gravity.CENTER, 0, 0);
+						    toast.show();
+						}
 					}
 					selectIndex = arg2;
 					Log.v("shortClick", "shortClick");
@@ -339,7 +368,12 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 						    toast.setGravity(Gravity.CENTER, 0, 0);
 						    toast.show();
 				    }else if("2".equals(onlineModle)){ //Offline Modle
-				    	
+				    	ProductObject cacheObj = getCache();
+				    	List<OrderList> listM=cacheObj.getOrder_list();
+				    	if(listM!=null && listM.size()>0){
+					    	String jsonStrAll = JsonUtils.getSyncAllJsonStr(cacheObj);
+					    	new SyscAllProduct((ProductListActivity)ctx,jsonStrAll).start();
+				    	}
 				    }
 				} catch (AppException e) {
 					ToastView toast = new ToastView(ctx,e.getMessage());
@@ -486,6 +520,11 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
             map.put("ItemText", tmpOrderList.getFloor()+"F(" +tmpOrderList.getPurchase_code()+ ") "+tmpOrderList.getGoods_attr() +" -"+tmpOrderList.getGoods_number() +"" +
             		"件*P"+tmpOrderList.getGoods_price() + " [" +tmpOrderList.getShort_order_time()+"]");  
             listItem.add(map);  
+    	}
+    	if(orderList!=null&&(orderList.size()==0)){
+    		ToastView toast = new ToastView(ctx,"[缓存记录为空!] ");
+		    toast.setGravity(Gravity.CENTER, 0, 0);
+		    toast.show();
     	}
     	
     	listItemAdapter= new SimpleAdapter(context,listItem,R.layout.list_items,new String[] {"ItemImage","ItemTitle", "ItemText"},new int[] {R.id.ItemImage,R.id.ItemTitle,R.id.ItemText});  
@@ -743,6 +782,41 @@ class GetProductThread extends Thread { //子线程去范围网络资源
     	
     	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_LIST_GETALL_CODE,productObject);
     	context.getHandler().sendMessage(message) ;     	
+	}
+	
+}
+
+
+class SyscAllProduct extends Thread{ //SYSC ALL PRODUCT STATUS
+	private ProductListActivity context;
+	private String orderId;
+	public SyscAllProduct(){
+		
+	}
+	
+	public SyscAllProduct(ProductListActivity context,String orderId){
+		this.context = context;
+		this.orderId = orderId;
+	}
+	
+	@Override
+	public void run() {
+		String returnStr;
+		Message message = Message.obtain();
+		try {
+			Httpservice.LoginGRP("admin", "admin123");
+			
+			returnStr = Httpservice.productSync(orderId);
+			JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
+			String returnCode =jsonObject.getString("error");
+			String content = jsonObject.getString("content");
+	    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SYCNALL_CODE,returnCode+"|"+content);
+	    	context.getHandler().sendMessage(message) ;    
+		} catch (AppException e) {
+			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SYCNALL_CODE,"001"+"|"+e.getMessage());
+	    	context.getHandler().sendMessage(message) ;    
+		}
+	 	
 	}
 	
 }

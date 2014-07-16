@@ -4,6 +4,7 @@ public class MessageHandleBean {
 	public static final String PRODUCT_LIST_ONE_CODE = "UPDATEONE";
 	public static final String PRODUCT_LIST_GETALL_CODE="GETALL";
 	public static final String PRODUCT_SENDEMAIL_CODE="SENDEMAIL";
+	public static final String PRODUCT_SYCNALL_CODE="SYCNALL";
 	public static final String EXCEPTION_CODE="EXCEPTION";
 	private String msgType;
 	private Object data;

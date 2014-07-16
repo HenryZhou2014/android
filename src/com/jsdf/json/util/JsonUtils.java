@@ -1,5 +1,6 @@
 package com.jsdf.json.util;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import net.sf.json.JSONObject;
 import com.jsdf.bean.OrderList;
 import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
+import com.jsdf.utils.Utils;
 
 public class JsonUtils {
 	
@@ -86,5 +88,33 @@ public class JsonUtils {
 			throw new AppException("拿单请求返回数据json转换异常",e);
 		}
 		return jsonObj;
+	}
+	
+	public static String getSyncAllJsonStr(ProductObject obj){
+		JSONObject  jsonObj  = new JSONObject();
+		List<OrderList> list = obj.getOrder_list();
+		String[] suc = new String[list.size()];
+		String[] fail = new String[list.size()];
+		String[] failContent = new String[list.size()];
+		for(int i = 0 ; list!=null&&i<list.size();i++){
+			OrderList order =  list.get(i);
+			String flag = order.getIs_get();
+			String content = order.getContent();
+			
+			if("1".equals(flag)){
+				suc[i] = order.getRec_id();
+			}else{
+				fail[i] = order.getRec_id();
+				failContent[i]=URLEncoder.encode(order.getContent());
+			}
+		}
+		suc = Utils.clearEmptyArray(suc);
+		fail = Utils.clearEmptyArray(fail);
+		failContent = Utils.clearEmptyArray(failContent);
+		jsonObj.put("success", suc);
+		jsonObj.put("fail", fail);
+		jsonObj.put("fail_content", failContent);
+		
+		return jsonObj.toString();
 	}
 }

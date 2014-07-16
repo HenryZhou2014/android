@@ -25,4 +25,22 @@ public class Utils {
 	public static void setProperties(String key,String value){
 		properties.setProperty(key, value);
 	}
+	
+	public static String[] clearEmptyArray(String[] ags){
+		int count =0;
+		for(String sr : ags){
+			if(sr!=null && sr.trim().length()>0){
+				count++;
+			}
+		}
+		String[] temp = new String[count];
+		int count2=0;
+		for(String sr : ags){
+			if(sr!=null && sr.trim().length()>0){
+				temp[count2]=sr;
+				count2++;
+			}
+		}
+		return temp;
+	}
 }
