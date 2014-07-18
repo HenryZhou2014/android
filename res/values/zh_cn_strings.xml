@@ -26,4 +26,6 @@
 	<string name="dialog_email_tommow">明天有</string>
 	<string name="dialog_email_down">下架</string>
 	<string name="dialog_email_product_err">货品信息错误</string>
+	<string name="check_remeber_user">记住用户</string>
+	<string name="check_auto_login">自动登录</string>
 </resources>

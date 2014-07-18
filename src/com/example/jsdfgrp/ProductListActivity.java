@@ -164,6 +164,8 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    			    toast.show();
 	    			    try {
 							setCache(new ProductObject());
+							ProductDataUtil.setProductObject(new ProductObject());
+							reDrawListView(ctx,conditionCurrent);
 						} catch (AppException e) {
 							toast = new ToastView(ctx,"[清空缓存错误！] " + e.getMessage());
 		    			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -213,6 +215,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				ProductDataUtil.setProductObject(offObjct);
 				productListTitle.setText(R.string.offlineModle);
 				synBtn.setText(R.string.product_syn);
+				filterBtn.setText(R.string.login_login);
 			} catch (AppException e) {
 				ToastView toast = new ToastView(ctx,e.getMessage());
 			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -373,6 +376,10 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				    	if(listM!=null && listM.size()>0){
 					    	String jsonStrAll = JsonUtils.getSyncAllJsonStr(cacheObj);
 					    	new SyscAllProduct((ProductListActivity)ctx,jsonStrAll).start();
+				    	}else{
+				    		ToastView toast = new ToastView(ctx,"无同步记录！");
+						    toast.setGravity(Gravity.CENTER, 0, 0);
+						    toast.show();
 				    	}
 				    }
 				} catch (AppException e) {
@@ -386,11 +393,16 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
         filterBtn.setOnClickListener(new Button.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				Intent filterIntent = new Intent(ctx,FilterActivity.class);
-				int requestCode =0;
-				Bundle  Bundle =null;
-				startActivityForResult(filterIntent, requestCode, Bundle);
-
+				 if("1".equals(onlineModle)){//Online Modle
+					 	Intent filterIntent = new Intent(ctx,FilterActivity.class);
+						int requestCode =0;
+						Bundle  Bundle =null;
+						startActivityForResult(filterIntent, requestCode, Bundle);
+				 }else if("2".equals(onlineModle)){//offline 
+					 	Intent loginIntent = new Intent(ctx,MainActivity.class);
+					 	startActivity(loginIntent);
+					 	((ProductListActivity)ctx).finish();
+				 }
 			}
 		});
         
@@ -804,8 +816,8 @@ class SyscAllProduct extends Thread{ //SYSC ALL PRODUCT STATUS
 		String returnStr;
 		Message message = Message.obtain();
 		try {
-			Httpservice.LoginGRP("admin", "admin123");
-			
+//			Httpservice.LoginGRP("admin", "admin123");
+			Httpservice.relogin();
 			returnStr = Httpservice.productSync(orderId);
 			JSONObject  jsonObject = JsonUtils.strConvert2Json(returnStr);
 			String returnCode =jsonObject.getString("error");

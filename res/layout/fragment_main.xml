@@ -124,6 +124,32 @@
                 android:textSize="16dp" />
         </FrameLayout>
     </LinearLayout>
+ <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:gravity="center_vertical"
+        android:orientation="vertical" >
+         <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="50dp" >
+			    <CheckBox
+			        android:id="@+id/checkBoxRemeber"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_marginLeft="50dp"
+			        android:layout_gravity="center_vertical"
+			        android:text="@string/check_remeber_user" />
+			
+			    <CheckBox
+			        android:id="@+id/checkBoxAutoLogin"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_marginLeft="150dp"
+			        android:layout_gravity="center_vertical"
+			        android:text="@string/check_auto_login" />
+		</FrameLayout>		    
+	</LinearLayout>
 
     <TextView
         android:id="@+id/login_register"

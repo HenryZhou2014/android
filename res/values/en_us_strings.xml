@@ -21,4 +21,6 @@
 	<string name="offlineModle">Offline</string>
 	<string name="onlineModle">Online</string>
 	<string name="dialog_email_promt">Email Content</string>
+	<string name="check_remeber_user">RemeberMe</string>
+	<string name="check_auto_login">AutoLogin</string>
 </resources>

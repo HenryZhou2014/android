@@ -16,11 +16,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
@@ -35,11 +34,18 @@ public class MainActivity extends Activity implements OnClickListener {
 	private EditText password;
 	private TextView register;
 	private MainActivity context;
+	private CheckBox remeberMe;
+	private CheckBox autoLogin;
+	
+	private String remeberMeFlag="0";
+	private String autoLoginFlag="0";
+	
 	private String name;
 	private String psd;
 	private Handler handler;
 	public static final int MODLE_VALUE=200;
 	public static final String MODLE_NAME="MODLE";
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -55,13 +61,16 @@ public class MainActivity extends Activity implements OnClickListener {
 		userName = (EditText) findViewById(R.id.login_name);
 		password = (EditText) findViewById(R.id.login_password);
 		register = (TextView) findViewById(R.id.login_register);
+		autoLogin = (CheckBox) findViewById(R.id.checkBoxAutoLogin);
+		remeberMe = (CheckBox) findViewById(R.id.checkBoxRemeber);
         register.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
         
 //        back.setOnClickListener(this);
 		login.setOnClickListener(this);
 		register.setOnClickListener(this);
 		offline.setOnClickListener(this);
-		
+		remeberMe.setOnClickListener(this);
+		autoLogin.setOnClickListener(this);
 		 handler=new Handler(){
 		    	public void handleMessage(Message msg){
 		    		String[] str = (String[])msg.obj;
@@ -71,6 +80,16 @@ public class MainActivity extends Activity implements OnClickListener {
 					startActivity(registerIntent);
 //					setResult(MODLE_VALUE, registerIntent);
 					context.finish();
+					try{
+						Utils.setProperties(Utils.USERNAME, name);
+						Utils.setProperties(Utils.PASSWORD, psd);
+						Utils.setProperties(Utils.AUTOLOGIN,autoLoginFlag);
+						Utils.setProperties(Utils.REMEBERME,remeberMeFlag);
+					}catch(AppException e){
+						ToastView toast = new ToastView(context, e.getMessage());
+				        toast.setGravity(Gravity.CENTER, 0, 0);
+				        toast.show();
+					}
 	      		}else{
 		    		ToastView toast = new ToastView(context, "µÇÂ¼Ê§°Ü£º"+str[1]);
 			        toast.setGravity(Gravity.CENTER, 0, 0);
@@ -78,6 +97,31 @@ public class MainActivity extends Activity implements OnClickListener {
 	      		}
 		    }
 		 };
+		 
+		 
+		 //×Ô¶¯µÇÂ¼
+		 try{
+			 autoLoginFlag =Utils.getProperties(Utils.AUTOLOGIN);
+			 if(autoLoginFlag==null)autoLoginFlag="0";
+			 remeberMeFlag = Utils.getProperties(Utils.REMEBERME);
+			 if(remeberMeFlag==null)remeberMeFlag="0";
+			 if("1".equals(remeberMeFlag)){
+				 remeberMe.setChecked(true);
+				 name = Utils.getProperties(Utils.USERNAME);
+				 psd = Utils.getProperties(Utils.PASSWORD);
+				 userName.setText(name);
+				 password.setText(psd);
+			 }
+			 
+			 if("1".equals(remeberMeFlag) &&"1".equals(autoLoginFlag)){
+				 autoLogin.setChecked(true);
+				 login.callOnClick();
+			 }
+		 }catch(AppException e){
+				ToastView toast = new ToastView(context, e.getMessage());
+		        toast.setGravity(Gravity.CENTER, 0, 0);
+		        toast.show();
+		 }
 	}
 	
 	
@@ -143,6 +187,22 @@ public class MainActivity extends Activity implements OnClickListener {
 			intent = new Intent(this, RegisterActivity.class);
 			startActivityForResult(intent, 1);
 			
+			break;
+		case R.id.checkBoxRemeber:
+			if(remeberMe.isChecked()){
+				remeberMeFlag = "1";
+			}else{
+				remeberMeFlag = "0";
+			}
+			Log.v("remeberMeFlag", remeberMeFlag);
+			break;
+		case R.id.checkBoxAutoLogin:
+			if(autoLogin.isChecked()){
+				autoLoginFlag = "1";
+			}else{
+				autoLoginFlag = "0";
+			}
+			Log.v("autoLogin", autoLoginFlag);
 			break;
 		}
 		
@@ -211,8 +271,13 @@ public class MainActivity extends Activity implements OnClickListener {
 	      			context.getHandler().sendMessage(messageObj);
 				}
               	Log.v("SEESIONID", Httpservice.clientSessionId);
-              	Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
-              	Log.v("LOGINED propertis", Utils.getProperties("SESSIONID"));
+              	try{
+              		Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
+              		Log.v("LOGINED propertis", Utils.getProperties("SESSIONID"));
+              	}catch(AppException e){
+              		Log.v("LOGINED propertis excetpion ", e.getMessage());
+              	}
+              	
 		}
 	}
 }

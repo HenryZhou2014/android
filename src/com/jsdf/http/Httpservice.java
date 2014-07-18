@@ -17,6 +17,7 @@ import org.apache.commons.httpclient.params.HttpMethodParams;
 import android.util.Log;
 
 import com.jsdf.exception.AppException;
+import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.Utils;
 
 
@@ -43,7 +44,7 @@ public class Httpservice {
 	static{
 		client.getHttpConnectionManager().getParams().setConnectionTimeout(timeOut);
 	}
-	public static void sysnSessionId(){
+	public static void sysnSessionId() throws AppException{
 		clientSessionId = Utils.getProperties(Utils.SESSIONID);
 	}
 	
@@ -309,6 +310,21 @@ public class Httpservice {
 		} catch (IOException e) {
 			Log.v("getProductList EXCPTION",e.getMessage());
 			throw new AppException("请求服务器异常",e);
+		}
+		return returnStr;
+	}
+	
+	
+	public static String relogin() throws AppException{
+		String username = Utils.getProperties(Utils.USERNAME);
+		String password = Utils.getProperties(Utils.PASSWORD);
+//		System.out.println("relogin Username:"+ username);
+//		System.out.println("relogin Password:"+password);
+		String returnStr="";
+		if((username!=null && username.trim().length()>0)   && (password!=null && password.trim().length()>0)){
+			returnStr = LoginGRP(username,password);
+		}else{
+			throw new AppException("需要重新登录");
 		}
 		return returnStr;
 	}
