@@ -3,7 +3,6 @@
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="#836FFF"
     android:gravity="center_vertical|center_horizontal">
     <!-- 
     <RelativeLayout 
@@ -28,20 +27,26 @@
         
     </RelativeLayout>
      -->
-    <EditText
-                android:id="@+id/emailContentId"
-                android:layout_width="fill_parent"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="5dp"
-                android:layout_marginTop="20dp"
-                style="?android:attr/textViewStyle"
-                android:background="#ffffff"
-                android:hint="@string/dialog_email_promt"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:singleLine="true"
-                android:textSize="20sp" />
+     <RelativeLayout 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dip"
+        android:paddingTop="10dip">
+	    <EditText
+	                android:id="@+id/emailContentId"
+	                android:layout_width="fill_parent"
+	                android:layout_height="40dp"
+	                android:layout_gravity="center_vertical"
+	                android:layout_margin="36dip" 
+	                android:background="#ffffff"
+	                android:hint="@string/dialog_email_promt"
+	                android:paddingLeft="5dp"
+	                android:padding="5dip"  
+	                android:singleLine="true"
+                	android:textColor="#000000"
+                	android:textColorHint="#AAAAAA" 
+	                android:textSize="20sp" />
+    </RelativeLayout>
     <RelativeLayout 
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
