@@ -7,16 +7,24 @@
         android:layout_width="match_parent" 
         android:layout_height="wrap_content" 
          > 
-      <!-- 
+       <!-- 
         <ImageView 
             android:id="@+id/load" 
             android:layout_width="wrap_content" 
             android:layout_height="wrap_content" 
             android:src="@drawable/loading21" /> 
-      -->  
+       
 		<com.jsdf.view.MyGifView
 		    android:id="@+id/load2"  
        		android:layout_height="wrap_content"  
-       		android:layout_width="wrap_content" /> 
+       		android:layout_width="wrap_content" /> -->
+         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_horizontal"
+            android:text="@string/load_warit"
+            android:textColor="#ffffff"
+            android:textSize="24sp" />	
     </LinearLayout> 
 </LinearLayout> 

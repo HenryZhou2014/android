@@ -23,4 +23,5 @@
 	<string name="dialog_email_promt">Email Content</string>
 	<string name="check_remeber_user">RemeberMe</string>
 	<string name="check_auto_login">AutoLogin</string>
+	<string name="load_warit">wait...</string>
 </resources>

@@ -116,9 +116,11 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		    		ProductObject productObject=(ProductObject)handleBean.getData();//obj不一定是String类，可以是别的类，看用户具体的应用
 		    		ProductDataUtil.setProductObject(productObject);
 		    		drawListView(ProductDataUtil.getProductObject(),listItem,ctx,list);
+		    		loadView.hide();
 	    		}else if(MessageHandleBean.PRODUCT_LIST_ONE_CODE.equals(handleBean.getMsgType())){
 	    			String str = (String)handleBean.getData();
 	    			String[] reutunArray = str.split("\\|");
+	    			loadView.hide();
 	    			if(reutunArray[0].equals("0")){
 	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], reutunArray[3]);
 	    				if(conditionCurrent==null){ //只显示未拿货数据
@@ -136,6 +138,8 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    		}else if(MessageHandleBean.PRODUCT_SENDEMAIL_CODE.equals(handleBean.getMsgType())){
 	    			String str = (String)handleBean.getData();
 	    			String[] reutunArray = str.split("\\|");
+	    			loadView.hide();
+	    			emailDialog.hide();
 	    			if(reutunArray[0].equals("0")){
 //	    				ProductDataUtil.updateIsGetStatus(reutunArray[2], "1");
 //	    				if(conditionCurrent==null){ //只显示未拿货数据
@@ -144,11 +148,12 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //	    				}else{
 //	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
 //	    				}
+	    				
 	    				reDrawListView(ctx,conditionCurrent);
 	    				ToastView toast = new ToastView(ctx,"发送邮件成功");
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
-	    			    emailDialog.hide();
+	    			    
 	    			}else{
 	    				ToastView toast = new ToastView(ctx,"发送邮件失败："+reutunArray[1]);
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -206,6 +211,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
         
 	    if("1".equals(onlineModle)){//Online Modle
 	    	new GetProductThread(this).start(); //通过子线程获取网络数据，更新子线程
+	    	loadView.show();
 	    	productListTitle.setText(R.string.onlineModle);
 	    	synBtn.setText(R.string.product_cache);
 	    }else if("2".equals(onlineModle)){ //Offline Modle
@@ -234,9 +240,12 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	            	String getFlag = selectOrder.getIs_get();
 					if("1".equals(onlineModle)){
 						if("0".equals(getFlag)){//拿货
+							 loadView.show();
 							ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
 						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"1").start();
+						   
 						}else{//取消拿货
+							loadView.show();
 							ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "0");
 						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"0").start();
 						}
@@ -288,6 +297,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		            	emailContent.clearFocus();
 		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+		    			loadView.show();
 					}
 				});
             	
@@ -309,6 +319,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		            	emailContent.clearFocus();
 		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+		    			loadView.show();
 					}
 				});
             	
@@ -323,6 +334,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		            	emailContent.clearFocus();
 		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+		    			loadView.show();
 					}
 				});
             	
@@ -337,6 +349,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		            	emailContent.clearFocus();
 		    			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 		    			imm.hideSoftInputFromWindow(emailContent.getWindowToken(), 0);
+		    			loadView.show();
 					}
 				});
 				return false;
@@ -363,7 +376,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //					System.out.println(cacheObj.getOrder_list());
 //					if(cacheObj.getOrder_list()!=null)
 //						System.out.println(cacheObj.getOrder_list());
-//					loadView.show();
+					loadView.show();
 
 					 if("1".equals(onlineModle)){//Online Modle
 							setCache(ProductDataUtil.getProductObject());

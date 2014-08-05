@@ -24,6 +24,7 @@ import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.Utils;
+import com.jsdf.view.LoadView;
 import com.jsdf.view.ToastView;
 
 public class MainActivity extends Activity implements OnClickListener {
@@ -36,7 +37,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	private MainActivity context;
 	private CheckBox remeberMe;
 	private CheckBox autoLogin;
-	
+	private LoadView loadView = null;
 	private String remeberMeFlag="0";
 	private String autoLoginFlag="0";
 	
@@ -64,7 +65,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		autoLogin = (CheckBox) findViewById(R.id.checkBoxAutoLogin);
 		remeberMe = (CheckBox) findViewById(R.id.checkBoxRemeber);
         register.getPaint().setFlags(Paint.UNDERLINE_TEXT_FLAG);
-        
+        loadView = new LoadView(this);
 //        back.setOnClickListener(this);
 		login.setOnClickListener(this);
 		register.setOnClickListener(this);
@@ -74,12 +75,14 @@ public class MainActivity extends Activity implements OnClickListener {
 		 handler=new Handler(){
 		    	public void handleMessage(Message msg){
 		    		String[] str = (String[])msg.obj;
+		    		loadView.hide();
           		if("0".equals(str[0])){
           			Intent registerIntent = new Intent(context,ProductListActivity.class);
           			registerIntent.putExtra(MODLE_NAME, "1");
 					startActivity(registerIntent);
 //					setResult(MODLE_VALUE, registerIntent);
 					context.finish();
+					
 					try{
 						Utils.setProperties(Utils.USERNAME, name);
 						Utils.setProperties(Utils.PASSWORD, psd);
@@ -151,6 +154,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				CloseKeyBoard();
 				
 				new loginSubThread(name, psd,context).start();
+				loadView.show();
 //				new Thread(new Runnable(){//主线程中不能直接访问网络，必须通过子线程
 //	                @Override
 //	                public void run() {
