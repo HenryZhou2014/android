@@ -29,4 +29,10 @@
 	<string name="check_remeber_user">记住用户</string>
 	<string name="check_auto_login">自动登录</string>
 	<string name="load_warit">处理中...</string>
+	<string name="app_list_header_refresh_last_update">上次更新</string>
+	<string name="app_list_header_refresh_down">下载</string>
+	<string name="load_warit1">处理中</string>
+	<string name="load_warit2">处理中.</string>
+	<string name="load_warit3">处理中..</string>
+	<string name="load_warit4">处理中...</string>
 </resources>

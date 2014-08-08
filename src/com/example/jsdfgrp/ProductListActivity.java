@@ -34,16 +34,24 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -55,7 +63,6 @@ import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
 import com.jsdf.utils.ProductDataUtil;
-import com.jsdf.utils.Utils;
 import com.jsdf.view.EmailDialog;
 import com.jsdf.view.LoadView;
 import com.jsdf.view.ToastView;
@@ -89,6 +96,24 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private EmailDialog emailDialog = null;
     private EditText emailContent;
     private OrderList dbClickSelectOrder;
+    
+    
+    //list header
+    private LinearLayout mHeaderLinearLayout = null;
+    private TextView mHeaderTextView = null;
+    private TextView mHeaderUpdateText = null;
+    private ImageView mHeaderPullDownImageView = null;
+    private ImageView mHeaderReleaseDownImageView = null;
+    private ProgressBar mHeaderProgressBar = null;
+    private int mHeaderHeight;
+    private int mCurrentScrollState;
+    private final static int NONE_PULL_REFRESH = 0;   //正常状态
+    private final static int ENTER_PULL_REFRESH = 1;  //进入下拉刷新状态
+    private final static int OVER_PULL_REFRESH = 2;   //进入松手刷新状态
+    private final static int EXIT_PULL_REFRESH = 3;     //松手后反弹后加载状态
+    private int mPullRefreshState = 0;                         //记录刷新状态
+    private float mDownY;
+    private float mMoveY;
     
     
 	@Override
@@ -237,36 +262,150 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
                     long arg3) {  
             	if(!longClickFlag){ //长按没有触发
 	            	OrderList selectOrder = ProductDataUtil.getCacheFromListByIndex(arg2);
-	            	String getFlag = selectOrder.getIs_get();
-					if("1".equals(onlineModle)){
-						if("0".equals(getFlag)){//拿货
-							 loadView.show();
-							ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"1").start();
-						   
-						}else{//取消拿货
-							loadView.show();
-							ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "0");
-						    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"0").start();
+	            	if(selectOrder!=null){
+		            	String getFlag = selectOrder.getIs_get();
+						if("1".equals(onlineModle)){
+							if("0".equals(getFlag)){//拿货
+								 loadView.show();
+								ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+							    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"1").start();
+							   
+							}else{//取消拿货
+								loadView.show();
+								ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "0");
+							    new UpdateOneProductStatus((ProductListActivity)ctx,selectOrder.getRec_id(),selectOrder.getOrder_id(),"0").start();
+							}
+						}else if ("2".equals(onlineModle)){
+							try{
+							    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
+							    setCache(ProductDataUtil.getProductObject());
+							    reDrawListView(ctx,conditionCurrent);
+							} catch (AppException e) {
+								ToastView toast = new ToastView(ctx,e.getMessage());
+							    toast.setGravity(Gravity.CENTER, 0, 0);
+							    toast.show();
+							}
 						}
-					}else if ("2".equals(onlineModle)){
-						try{
-						    ProductDataUtil.updateIsGetStatus(selectOrder.getOrder_id(), "1");
-						    setCache(ProductDataUtil.getProductObject());
-						    reDrawListView(ctx,conditionCurrent);
-						} catch (AppException e) {
-							ToastView toast = new ToastView(ctx,e.getMessage());
-						    toast.setGravity(Gravity.CENTER, 0, 0);
-						    toast.show();
-						}
-					}
-					selectIndex = arg2;
-					Log.v("shortClick", "shortClick");
+						selectIndex = arg2;
+						Log.v("shortClick", "shortClick");
+	            	}
             	}
             	longClickFlag=false;
             }  
         });  
        
+//       list.setOnTouchListener(new OnTouchListener(){
+//
+//		@Override
+//		public boolean onTouch(View arg0, MotionEvent ev) {
+//			 switch (ev.getAction()) {
+//		        case MotionEvent.ACTION_DOWN:
+//		            //记下按下位置
+//		            //改变
+//		            mDownY = ev.getY();
+//		            break;
+//		        case MotionEvent.ACTION_MOVE:
+//		            //移动时手指的位置
+//		            mMoveY = ev.getY();
+//		            if (mPullRefreshState == OVER_PULL_REFRESH) {
+//		                //注意下面的mDownY在onScroll的第二个else中被改变了
+//		                mHeaderLinearLayout.setPadding(mHeaderLinearLayout.getPaddingLeft(),
+//		                        (int)((mMoveY - mDownY)/3), //1/3距离折扣
+//		                        mHeaderLinearLayout.getPaddingRight(),
+//		                        mHeaderLinearLayout.getPaddingBottom());
+//		            }
+//		            break;
+//		        case MotionEvent.ACTION_UP:
+//		            //when you action up, it will do these:
+//		            //1. roll back util header topPadding is 0
+//		            //2. hide the header by setSelection(1)
+//		            if (mPullRefreshState == OVER_PULL_REFRESH || mPullRefreshState == ENTER_PULL_REFRESH) {
+//		                new Thread() {
+//		                    public void run() {
+//		                        Message msg;
+//		                        while(mHeaderLinearLayout.getPaddingTop() > 1) {
+////		                            msg = mHandler.obtainMessage();
+////		                            msg.what = REFRESH_BACKING;
+////		                            mHandler.sendMessage(msg);
+//		                            try {
+//		                                sleep(5);//慢一点反弹，别一下子就弹回去了
+//		                            } catch (InterruptedException e) {
+//		                                e.printStackTrace();
+//		                            }
+//		                        }
+////		                        msg = mHandler.obtainMessage();
+//		                        if (mPullRefreshState == OVER_PULL_REFRESH) {
+////		                            msg.what = REFRESH_BACED;//加载数据完成，结束返回
+//		                        } else {
+////		                            msg.what = REFRESH_RETURN;//未达到刷新界限，直接返回
+//		                        }
+////		                        mHandler.sendMessage(msg);
+//		                    };
+//		                }.start();
+//		            }
+//		            break;
+//		    }
+//		    return false;
+//		}
+//    	   
+//       }); 
+//        
+//       list.setOnScrollListener(new OnScrollListener(){
+//
+//			@Override
+//			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+//				if (mCurrentScrollState ==SCROLL_STATE_TOUCH_SCROLL
+//			            && firstVisibleItem == 0
+//			            && (mHeaderLinearLayout.getBottom() >= 0 && mHeaderLinearLayout.getBottom() < mHeaderHeight)) {
+//			        //进入且仅进入下拉刷新状态
+//			        if (mPullRefreshState == NONE_PULL_REFRESH) {
+//			            mPullRefreshState = ENTER_PULL_REFRESH;
+//			        }
+//			    } else if (mCurrentScrollState ==SCROLL_STATE_TOUCH_SCROLL
+//			            && firstVisibleItem == 0
+//			            && (mHeaderLinearLayout.getBottom() >= mHeaderHeight)) {
+//			        //下拉达到界限，进入松手刷新状态
+//			        if (mPullRefreshState == ENTER_PULL_REFRESH || mPullRefreshState == NONE_PULL_REFRESH) {
+//			            mPullRefreshState = OVER_PULL_REFRESH;
+//			            //下面是进入松手刷新状态需要做的一个显示改变
+//			            mDownY = mMoveY;//用于后面的下拉特殊效果
+//			            mHeaderTextView.setText("松手刷新");
+//			            mHeaderPullDownImageView.setVisibility(View.GONE);
+//			            mHeaderReleaseDownImageView.setVisibility(View.VISIBLE);
+//			        }
+//			    } else if (mCurrentScrollState ==SCROLL_STATE_TOUCH_SCROLL && firstVisibleItem != 0) {
+//			        //不刷新了
+//			        if (mPullRefreshState == ENTER_PULL_REFRESH) {
+//			            mPullRefreshState = NONE_PULL_REFRESH;
+//			        }
+//			    } else if (mCurrentScrollState == SCROLL_STATE_FLING && firstVisibleItem == 0) {
+//			        //飞滑状态，不能显示出header，也不能影响正常的飞滑
+//			        //只在正常情况下才纠正位置
+//			        if (mPullRefreshState == NONE_PULL_REFRESH) {
+//			        	setListSelection(selectIndex);
+//			        }
+//			    }else if (mCurrentScrollState == SCROLL_STATE_TOUCH_SCROLL
+//			            && firstVisibleItem == 0
+//			            && (mHeaderLinearLayout.getBottom() >= mHeaderHeight)) {
+//			        //下拉达到界限，进入松手刷新状态
+//			        if (mPullRefreshState == ENTER_PULL_REFRESH || mPullRefreshState == NONE_PULL_REFRESH) {
+//			            mPullRefreshState = OVER_PULL_REFRESH;
+//			            mDownY = mMoveY; //为下拉1/3折扣效果记录开始位置
+//			            mHeaderTextView.setText("松手刷新");//显示松手刷新
+//			            mHeaderPullDownImageView.setVisibility(View.GONE);//隐藏"下拉刷新"
+//			            mHeaderReleaseDownImageView.setVisibility(View.VISIBLE);//显示向上的箭头
+//			        }
+//			    }
+//			}
+//	
+//			@Override
+//			public void onScrollStateChanged(AbsListView view, int scrollState) {
+//				// TODO Auto-generated method stub
+//				 mCurrentScrollState = scrollState;
+//			}
+//    	   
+//       });
+        
        /**
         * @see<p>长按</p>
         */
@@ -510,6 +649,27 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     	}
     }
     
+    private void measureView(View child) {
+        ViewGroup.LayoutParams p = child.getLayoutParams();
+        if (p == null) {
+            p = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+     
+        int childWidthSpec = ViewGroup.getChildMeasureSpec(0, 0 + 0, p.width);
+        int lpHeight = p.height;
+        int childHeightSpec;
+        if (lpHeight > 0) {
+            childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight,
+                    MeasureSpec.EXACTLY);
+        } else {
+            childHeightSpec = MeasureSpec.makeMeasureSpec(0,
+                    MeasureSpec.UNSPECIFIED);
+        }
+        child.measure(childWidthSpec, childHeightSpec);
+    }
+    
+    
     /**
      * @author Henry
      * @<p>显示ViewList</p>
@@ -520,13 +680,39 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
      */
 	public void drawListView(ProductObject productObject,ArrayList<HashMap<String, Object>> listItem,Context context,ListView list){
 		List<OrderList> orderList  = productObject.getOrder_list();
+		
 		//清空
 		listItem.clear();
+//		if(mHeaderLinearLayout!=null)list.removeHeaderView(mHeaderLinearLayout);
+		
+//		mHeaderLinearLayout = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.refresh_list_header, null);
+//        list.addHeaderView(mHeaderLinearLayout);
+        
+		
     	SimpleAdapter listItemAdapter= new SimpleAdapter(context,listItem,R.layout.list_items,new String[] {"ItemImage","ItemTitle", "ItemText"},new int[] {R.id.ItemImage,R.id.ItemTitle,R.id.ItemText});  
 //    	listItemAdapter.notifyDataSetChanged();
 //    	listItemAdapter.notifyDataSetInvalidated();
     	list.setAdapter(listItemAdapter);
     	ProductDataUtil.clearCacheListViewData();
+    	
+    	
+    	ProductDataUtil.cacheListViewData(0, null);
+//    	map = new HashMap<String, Object>();  
+////		map.put("ItemImage", R.drawable.checkbox_selected);//图像资源的ID  
+//        map.put("ItemTitle", "");  
+//        map.put("ItemText", "刷新中。。。");  
+    	
+//        mHeaderTextView = (TextView) findViewById(R.id.refresh_list_header_text);
+//        mHeaderUpdateText = (TextView) findViewById(R.id.refresh_list_header_last_update);
+//        mHeaderPullDownImageView = (ImageView) findViewById(R.id.refresh_list_header_pull_down);
+//        mHeaderReleaseDownImageView = (ImageView) findViewById(R.id.refresh_list_header_release_up);
+//        mHeaderProgressBar = (ProgressBar) findViewById(R.id.refresh_list_header_progressbar);
+//        measureView(mHeaderLinearLayout);
+//        mHeaderHeight = mHeaderLinearLayout.getMeasuredHeight();
+    	
+    	
+//        listItem.add(map);
+    	
     	for(int i = 0; orderList!=null&&(i<orderList.size()) ; i++){
     		OrderList tmpOrderList = orderList.get(i);
     		ProductDataUtil.cacheListViewData(i, tmpOrderList);
@@ -663,6 +849,10 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	public boolean onSingleTapUp(MotionEvent arg0) {
 		Log.v("onSingleTapUp", "onSingleTapUp");
 		return false;
+	}
+	
+	public void  setListSelection(int index){
+		list.setSelection(selectIndex);
 	}
     
 }

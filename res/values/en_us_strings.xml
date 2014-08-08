@@ -23,5 +23,11 @@
 	<string name="dialog_email_promt">Email Content</string>
 	<string name="check_remeber_user">RemeberMe</string>
 	<string name="check_auto_login">AutoLogin</string>
-	<string name="load_warit">wait...</string>
+	<string name="load_warit">wait。。。</string>
+	<string name="app_list_header_refresh_last_update">last update</string>
+	<string name="app_list_header_refresh_down">down</string>
+		<string name="load_warit1">wait</string>
+	<string name="load_warit2">wait.</string>
+	<string name="load_warit3">wait..</string>
+	<string name="load_warit4">wait...</string>
 </resources>
