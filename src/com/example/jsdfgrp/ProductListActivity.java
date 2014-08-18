@@ -38,6 +38,7 @@ import android.view.View.MeasureSpec;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
@@ -119,6 +120,8 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE); 
+		
 		setContentView(R.layout.activity_productlist);
 		onlineModle = (String) this.getIntent().getExtras().get(MainActivity.MODLE_NAME);
 		ctx = this;
@@ -187,6 +190,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    		}else if(MessageHandleBean.PRODUCT_SYCNALL_CODE.equals(handleBean.getMsgType())){
 	    			String str = (String)handleBean.getData();
 	    			String[] reutunArray = str.split("\\|");
+	    			loadView.hide();
 	    			if(reutunArray[0].equals("000")){
 	    				//reDrawListView(ctx,conditionCurrent);
 	    				ToastView toast = new ToastView(ctx,"同步成功");
@@ -423,7 +427,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
             	Button emailDown = (Button) emailDialog.findViewById(R.id.dialog_button_down); //下架
             	Button emailProError = (Button) emailDialog.findViewById(R.id.dialog_button_prod_err); //货品信息错误
             	emailContent = (EditText)emailDialog.findViewById(R.id.emailContentId);
-            	
+            	emailContent.findFocus();
             	emailOk.setOnClickListener(new OnClickListener() {
 					@Override
 					public void onClick(View arg0) {
@@ -522,6 +526,11 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 							ToastView toast = new ToastView(ctx,"离线成功");
 						    toast.setGravity(Gravity.CENTER, 0, 0);
 						    toast.show();
+						    onlineModle="2";
+						    synBtn.setText(R.string.upload_btn);
+							filterBtn.setText(R.string.download_btn);
+							productListTitle.setText(R.string.offlineModle);
+							loadView.hide();
 				    }else if("2".equals(onlineModle)){ //Offline Modle
 				    	ProductObject cacheObj = getCache();
 				    	List<OrderList> listM=cacheObj.getOrder_list();
@@ -551,9 +560,11 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 						Bundle  Bundle =null;
 						startActivityForResult(filterIntent, requestCode, Bundle);
 				 }else if("2".equals(onlineModle)){//offline 
-					 	Intent loginIntent = new Intent(ctx,MainActivity.class);
-					 	startActivity(loginIntent);
-					 	((ProductListActivity)ctx).finish();
+//					 	Intent loginIntent = new Intent(ctx,MainActivity.class);
+//					 	startActivity(loginIntent);
+//					 	((ProductListActivity)ctx).finish();
+					   new GetProductThread((ProductListActivity)ctx).start(); //通过子线程获取网络数据，更新子线程
+					   loadView.show();
 				 }
 			}
 		});
