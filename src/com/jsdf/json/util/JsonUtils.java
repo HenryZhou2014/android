@@ -10,6 +10,7 @@ import net.sf.json.JSONObject;
 import com.jsdf.bean.OrderList;
 import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
+import com.jsdf.exception.NoMoreDataException;
 import com.jsdf.utils.Utils;
 
 public class JsonUtils {
@@ -33,6 +34,9 @@ public class JsonUtils {
 		try{
 			jsonArray = JSONArray.fromObject(json.get("order_list"));
 			Object[] orderList = jsonArray.toArray();
+			if(orderList==null || orderList.length==0){
+				throw new NoMoreDataException("无可以拿货信息！");
+			}
 			productObj = new ProductObject();
 			productObj.setError((Integer)json.get("error"));
 			productObj.setContent((String)json.get("content"));
@@ -62,7 +66,11 @@ public class JsonUtils {
 				productList.add(tmpOrder);
 			}
 			productObj.setOrder_list(productList);
-		}catch(Exception e){
+		}
+		catch(NoMoreDataException e){
+			throw new AppException(e.getMessage(),e);
+		}
+		catch(Exception e){
 			throw new AppException("JSON对象字符串转换productObj异常",e);
 		}
 		return productObj;

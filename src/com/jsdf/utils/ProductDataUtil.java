@@ -39,7 +39,7 @@ public class ProductDataUtil {
 		List<OrderList> tmpList =  productObject.getOrder_list();
 		try{
 			for(int i = 0 ; tmpList!=null&& i< tmpList.size();i++ ){
-				if(tmpList.get(i).getOrder_id().equals(orderId))
+				if(tmpList.get(i).getRec_id().equals(orderId))
 				{
 					OrderList  switchOrder = tmpList.get(i);
 					switchOrder.setIs_get(status);
@@ -67,7 +67,7 @@ public class ProductDataUtil {
 		List<OrderList> tmpList =  productObject.getOrder_list();
 		try{
 			for(int i = 0 ; tmpList!=null&& i< tmpList.size();i++ ){
-				if(tmpList.get(i).getOrder_id().equals(orderId))
+				if(tmpList.get(i).getRec_id().equals(orderId))
 				{
 					OrderList  switchOrder = tmpList.get(i);
 					String tmpContent = switchOrder.getContent();

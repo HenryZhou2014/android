@@ -81,6 +81,7 @@ public class MainActivity extends Activity implements OnClickListener {
           			registerIntent.putExtra(MODLE_NAME, "1");
 					startActivity(registerIntent);
 //					setResult(MODLE_VALUE, registerIntent);
+					overridePendingTransition(R.anim.enteralpha, R.anim.exitalpha); 
 					context.finish();
 					
 					try{
