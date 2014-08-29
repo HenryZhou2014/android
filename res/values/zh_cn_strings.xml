@@ -37,4 +37,6 @@
 	<string name="load_warit4">处理中...</string>
 	<string name="upload_btn">上传</string>
 	<string name="download_btn">下载</string>
+	<string name="relogin_comform_btn">登录</string>
+	<string name="relogin_concel_btn">取消</string>
 </resources>

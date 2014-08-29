@@ -6,6 +6,7 @@ public class MessageHandleBean {
 	public static final String PRODUCT_SENDEMAIL_CODE="SENDEMAIL";
 	public static final String PRODUCT_SYCNALL_CODE="SYCNALL";
 	public static final String EXCEPTION_CODE="EXCEPTION";
+	public static final String RELOGIN_CODE="RELOGIN";
 	private String msgType;
 	private Object data;
 	

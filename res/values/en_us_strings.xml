@@ -32,4 +32,6 @@
 	<string name="load_warit4">wait...</string>
 	<string name="upload_btn">UpLoad</string>
 	<string name="download_btn">DownLoad</string>
+	<string name="relogin_comform_btn">Login</string>
+	<string name="relogin_concel_btn">Cancel</string>
 </resources>

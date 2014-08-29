@@ -71,11 +71,13 @@ import com.jsdf.bean.ProductObject;
 import com.jsdf.exception.AppException;
 import com.jsdf.http.Httpservice;
 import com.jsdf.json.util.JsonUtils;
+import com.jsdf.json.util.LoginThread;
 import com.jsdf.utils.CacheEmail;
 import com.jsdf.utils.ProductDataUtil;
 import com.jsdf.utils.Utils;
 import com.jsdf.view.EmailDialog;
 import com.jsdf.view.LoadView;
+import com.jsdf.view.ReloginDialog;
 import com.jsdf.view.ToastView;
 
 public class ProductListActivity extends Activity implements OnItemSelectedListener, OnGestureListener{
@@ -88,6 +90,7 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private Context ctx;
     private static List<OrderList> orderList;
     private PopupWindow mpop = null;
+    private ReloginDialog reloginWin = null;
     private Button synBtn=null; //同步按钮
     private Button filterBtn = null;
     private Dialog filterDialog = null;
@@ -126,13 +129,21 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     private int mPullRefreshState = 0;                         //记录刷新状态
     private float mDownY;
     private float mMoveY;
-    
+    private Resources resource;
+    //relogin
+    private Button loginconform;
+    private Button loginconcel;
+	private EditText userName;
+	private EditText password;
+	String name="";
+	String psd="";
+    //relogin
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE); 
-		
+		resource = (Resources) getBaseContext().getResources();
 		setContentView(R.layout.activity_productlist);
 		onlineModle = (String) this.getIntent().getExtras().get(MainActivity.MODLE_NAME);
 		ctx = this;
@@ -146,7 +157,10 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		String[] colors={"已拿","未拿"}; 
 		loadView = new LoadView(this);
 		
+		//relogin panel init begin
+		reloginWin= new ReloginDialog(this,R.style.ReloginDialog);
 		
+		//relogin panel init end 
 		
 	    handler=new Handler(){
 	    	public void handleMessage(Message msg){
@@ -226,6 +240,28 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     			    toast.setGravity(Gravity.CENTER, 0, 0);
     			    toast.show();
 	    		}
+	    		else if(MessageHandleBean.RELOGIN_CODE.equals(handleBean.getMsgType())){
+	    			String[] str = (String[])handleBean.getData();
+	    			loadView.hide();
+	    			if(str[0].equals("0")){
+						try {
+							Utils.setProperties(Utils.USERNAME, name);
+							Utils.setProperties(Utils.PASSWORD, psd);
+						} catch (AppException e) {
+							ToastView toast = new ToastView(ctx,"写用户信息错误："+e.getMessage());
+		    			    toast.setGravity(Gravity.CENTER, 0, 0);
+		    			    toast.show();
+						}
+	    				ToastView toast = new ToastView(ctx,"登陆成功");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			    reloginWin.dismiss();
+	    			}else{
+	    				ToastView toast = new ToastView(ctx,"登陆失败:"+str[1]);
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}
+	    		}
 	    		loadView.hide();
 //	    		orderList = productObject.getOrder_list();
 //            	for(int i = 0; orderList!=null&&(i<orderList.size()) ; i++){
@@ -261,8 +297,8 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				drawListView(offObjct,listItem,ctx,list);
 				ProductDataUtil.setProductObject(offObjct);
 				productListTitle.setText(R.string.offlineModle);
-				synBtn.setText(R.string.product_syn);
-				filterBtn.setText(R.string.login_login);
+				synBtn.setText(R.string.upload_btn);
+				filterBtn.setText(R.string.download_btn);
 			} catch (AppException e) {
 				ToastView toast = new ToastView(ctx,e.getMessage());
 			    toast.setGravity(Gravity.CENTER, 0, 0);
@@ -1031,8 +1067,8 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    	 Log.i("MenuTest:", "ItemSelected:1");      
 	           break;       
 	     case 2: // do something here       
-	    	 Log.i("MenuTest:", "ItemSelected:2");         
-	    	 	break;
+	    	  
+	    	 break;
 	     case 3: //logoff
 	    	 try{
 					Utils.setProperties(Utils.USERNAME, "");
@@ -1050,7 +1086,41 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 				}       
     	 	break;
 	     case 4: //  relogin
-	    	 	
+	    	 	reloginWin.show(); 
+	    	 	loginconform = (Button) reloginWin.findViewById(R.id.reloginConfirm);
+	    		loginconcel = (Button) reloginWin.findViewById(R.id.reLoginCancel);
+	    		userName = (EditText) reloginWin.findViewById(R.id.relogin_name);
+	    		password = (EditText) reloginWin.findViewById(R.id.relogin_password);
+	    		
+	    		final String usern=resource.getString(R.string.user_name_cannot_be_empty);
+	    	    final String pass=resource.getString(R.string.password_cannot_be_empty);
+	    		loginconform.setOnClickListener(new OnClickListener(){
+	    			@Override
+	    			public void onClick(View arg0) {
+	    				name = userName.getText().toString();
+	    				psd = password.getText().toString();
+	    				
+	    				if("".equals(name)) {				
+	    					ToastView toast = new ToastView(ctx, usern);
+	    			        toast.setGravity(Gravity.CENTER, 0, 0);
+	    			        toast.show();
+	    				} else if("".equals(psd)) {				
+	    					ToastView toast = new ToastView(ctx, pass);
+	    			        toast.setGravity(Gravity.CENTER, 0, 0);
+	    			        toast.show();
+	    				} else {
+	    					new LoginThread(name, psd,(ProductListActivity)ctx).start();
+	    					loadView.show();
+	    				}
+	    			}
+	    		});
+	    		loginconcel.setOnClickListener(new OnClickListener(){
+	    			@Override
+	    			public void onClick(View arg0) {
+	    				// TODO Auto-generated method stub
+	    				reloginWin.dismiss();
+	    			}
+	    		});
 	    	 	break;	 	
 	     case 5: // exit app       
 	    	 this.finish();
