@@ -215,7 +215,8 @@ public class Httpservice {
 			    return status+"_ERROR";
 			}
 			returnStr = post.getResponseBodyAsString();
-			Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
+			if(clientSessionId!=null && clientSessionId.trim().length()!=0)
+				Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
 			
 		}catch(UnknownHostException e){
 			Log.v("getProductList EXCPTION",e.getMessage());
@@ -280,13 +281,14 @@ public class Httpservice {
 	 * @throws AppException
 	 */
 	public  static String getProductList(String subUrl) throws AppException{
-		Log.v("sysnSessionIdBefore", clientSessionId);
-		sysnSessionId();
-		Log.v("sysnSessionIdAfter", clientSessionId);
-		System.out.println("getProductList sessionId:"+clientSessionId);
+		//Log.v("sysnSessionIdBefore", clientSessionId);
+		//sysnSessionId();
+		//Log.v("sysnSessionIdAfter", clientSessionId);
+		
 		while(clientSessionId==null){
 			sysnSessionId();
 		}
+		System.out.println("getProductList sessionId:"+clientSessionId);
 		String getUrl = testBaseUrl+subUrl+"?"+"act=mobilelist&type=1&is_ajax=1";
 		getUrl += "&"+COOKIE_NAME + "=" +clientSessionId;
 		System.out.println("getUrl:"+getUrl);

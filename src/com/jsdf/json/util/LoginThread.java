@@ -33,20 +33,23 @@ public class LoginThread extends Thread{
               	Log.v("LOGIN", "ENDING LOGIN..." + resultStr);
           	
           		String[] code = JsonUtils.getLoginCodeByJsonStr(resultStr);
-      			
+          		Log.v("SEESIONID", Httpservice.clientSessionId);
       			message.obj = new MessageHandleBean(MessageHandleBean.RELOGIN_CODE,code);
     	    	context.getHandler().sendMessage(message) ;
 			} catch (AppException e) {
+//				e.printStackTrace();
 				message.obj = new MessageHandleBean(MessageHandleBean.RELOGIN_CODE,new String[]{"001",e.getMessage()});
       			context.getHandler().sendMessage(message);
+			}finally{
+				
+              	try{
+//              		Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
+              		Log.v("LOGINED propertis", Utils.getProperties("SESSIONID"));
+              	}catch(AppException e){
+              		Log.v("LOGINED propertis excetpion ", e.getMessage());
+              	}
 			}
-          	Log.v("SEESIONID", Httpservice.clientSessionId);
-          	try{
-          		Utils.setProperties("SESSIONID", Httpservice.clientSessionId);
-          		Log.v("LOGINED propertis", Utils.getProperties("SESSIONID"));
-          	}catch(AppException e){
-          		Log.v("LOGINED propertis excetpion ", e.getMessage());
-          	}
+          
 	}
 
 }

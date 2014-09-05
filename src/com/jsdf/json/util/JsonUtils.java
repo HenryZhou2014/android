@@ -32,6 +32,13 @@ public class JsonUtils {
 			throw new AppException("JSON ×Ö·û´®×ª»»OBJÒì³£",e);
 		}
 		try{
+			Integer errorCode = (Integer)json.get("error");
+			if(1== errorCode){
+				productObj = new ProductObject();
+				productObj.setError(1);
+				productObj.setContent((String)json.get("content"));
+				return productObj;
+			}
 			jsonArray = JSONArray.fromObject(json.get("order_list"));
 			Object[] orderList = jsonArray.toArray();
 			if(orderList==null || orderList.length==0){

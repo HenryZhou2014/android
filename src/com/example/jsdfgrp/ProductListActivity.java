@@ -167,8 +167,15 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    		MessageHandleBean handleBean = (MessageHandleBean)msg.obj;
 	    		if(MessageHandleBean.PRODUCT_LIST_GETALL_CODE.equals(handleBean.getMsgType())){
 		    		ProductObject productObject=(ProductObject)handleBean.getData();//obj不一定是String类，可以是别的类，看用户具体的应用
-		    		ProductDataUtil.setProductObject(productObject);
-		    		drawListView(ProductDataUtil.getProductObject(),listItem,ctx,list);
+		    		
+		    		if(1== productObject.getError()){
+		    			ToastView toast = new ToastView(ctx,"获取数据失败  请重新登录");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+		    		}else{
+			    		ProductDataUtil.setProductObject(productObject);
+			    		drawListView(ProductDataUtil.getProductObject(),listItem,ctx,list);
+		    		}
 //		    		loadView.hide();
 	    		}else if(MessageHandleBean.PRODUCT_LIST_ONE_CODE.equals(handleBean.getMsgType())){
 	    			String str = (String)handleBean.getData();
@@ -183,7 +190,13 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 //	    					conditionCurrent.put(ProductDataUtil.ISGET_NAME, "0"); 
 	    				}
 	    				reDrawListView(ctx,conditionCurrent);
-	    			}else{
+	    			}
+	    			else if(reutunArray[0].equals("1")){
+	    				ToastView toast = new ToastView(ctx,"获取数据失败  请重新登录");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}
+	    			else{
 	    				ToastView toast = new ToastView(ctx,reutunArray[1]);
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
@@ -207,7 +220,13 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
 	    			    
-	    			}else{
+	    			}
+	    			else if(reutunArray[0].equals("1")){
+	    				ToastView toast = new ToastView(ctx,"发送邮件失败  请重新登录");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}
+	    			else{
 	    				ToastView toast = new ToastView(ctx,"发送邮件失败："+reutunArray[1]);
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
@@ -230,7 +249,12 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 		    			    toast.setGravity(Gravity.CENTER, 0, 0);
 		    			    toast.show();
 						}
-	    			}else{
+	    			}else if(reutunArray[0].equals("1")){
+	    				ToastView toast = new ToastView(ctx,"获取数据失败  请重新登录");
+	    			    toast.setGravity(Gravity.CENTER, 0, 0);
+	    			    toast.show();
+	    			}
+	    			else{
 	    				ToastView toast = new ToastView(ctx,"同步失败"+reutunArray[1]);
 	    			    toast.setGravity(Gravity.CENTER, 0, 0);
 	    			    toast.show();
@@ -329,8 +353,13 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 							}
 						}else if ("2".equals(onlineModle)){
 							try{
-							    ProductDataUtil.updateIsGetStatus(selectOrder.getRec_id(), "1");
-							    setCache(ProductDataUtil.getProductObject());
+								if("0".equals(getFlag)){//拿货
+								    ProductDataUtil.updateIsGetStatus(selectOrder.getRec_id(), "1");
+								    
+								}else{
+									ProductDataUtil.updateIsGetStatus(selectOrder.getRec_id(), "0");
+								}
+								setCache(ProductDataUtil.getProductObject());
 							    reDrawListView(ctx,conditionCurrent);
 							} catch (AppException e) {
 								ToastView toast = new ToastView(ctx,e.getMessage());
@@ -1061,13 +1090,35 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
     
     @Override     
     public boolean onOptionsItemSelected(MenuItem item) {   
-          // TODO Auto-generated method stub      
+          // TODO Auto-generated method stub    
+    	ToastView toast =null;	
        switch (item.getItemId()) {   
-	     case 1: // do something here            
-	    	 Log.i("MenuTest:", "ItemSelected:1");      
+	     case 1: // do something here         
+	    	 	loadView.show();
+	    	 	new GetProductThread(this).start(); //通过子线程获取网络数据，更新子线程
+	    	 	toast = new ToastView(ctx,"在线成功");
+			    toast.setGravity(Gravity.CENTER, 0, 0);
+			    toast.show();
+			    onlineModle="1";
+		    	synBtn.setText(R.string.product_cache);
+		    	filterBtn.setText(R.string.product_filter);
+				productListTitle.setText(R.string.onlineModle);
 	           break;       
 	     case 2: // do something here       
-	    	  
+				try {
+					setCache(ProductDataUtil.getProductObject());
+				} catch (AppException e1) {
+					toast = new ToastView(ctx,"离线失败:"+e1.getMessage());
+				    toast.setGravity(Gravity.CENTER, 0, 0);
+				    toast.show();
+				}
+	    	 	toast = new ToastView(ctx,"离线成功");
+			    toast.setGravity(Gravity.CENTER, 0, 0);
+			    toast.show();
+			    onlineModle="2";
+			    synBtn.setText(R.string.upload_btn);
+				filterBtn.setText(R.string.download_btn);
+				productListTitle.setText(R.string.offlineModle);
 	    	 break;
 	     case 3: //logoff
 	    	 try{
@@ -1076,11 +1127,11 @@ public class ProductListActivity extends Activity implements OnItemSelectedListe
 					Utils.setProperties(Utils.AUTOLOGIN,"");
 					Utils.setProperties(Utils.REMEBERME,"");
 					Utils.setProperties("SESSIONID", "");
-					ToastView toast = new ToastView(ctx, "注销成功");
+					toast = new ToastView(ctx, "注销成功");
 			        toast.setGravity(Gravity.CENTER, 0, 0);
 			        toast.show();
 				}catch(AppException e){
-					ToastView toast = new ToastView(ctx, "注销出错："+e.getMessage());
+					toast = new ToastView(ctx, "注销出错："+e.getMessage());
 			        toast.setGravity(Gravity.CENTER, 0, 0);
 			        toast.show();
 				}       
@@ -1217,7 +1268,7 @@ class SendEmail extends Thread{ //SENDEMAIL
 	    	message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SENDEMAIL_CODE,returnCode+"|"+msg);
 	    	context.getHandler().sendMessage(message) ;    
 		} catch (AppException e) {
-			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SENDEMAIL_CODE,"1|"+msg);
+			message.obj = new MessageHandleBean(MessageHandleBean.PRODUCT_SENDEMAIL_CODE,"2|"+msg);
 	    	context.getHandler().sendMessage(message) ;    
 		}
 	 	
@@ -1280,6 +1331,7 @@ class GetProductThread extends Thread { //子线程去范围网络资源
 		try {
 			productStr= Httpservice.getProductList(Httpservice.TEAM_GET_PRODUCT);
 	    	Log.v("SEESIONID", Httpservice.clientSessionId);
+	    	Log.v("GETALL PRODUCT:", productStr);
 			productObject = JsonUtils.convertProductFromJsonStr(productStr);
 		} catch (AppException e) {
 //			ToastView toast = new ToastView(context, e.getMessage());
